@@ -87,6 +87,8 @@ func TestAuthCacheInvalidationTrigger_ProfitControlColumns(t *testing.T) {
 		"peak_start":           "peak_start = '08:00'",
 		"peak_end":             "peak_end = '09:00'",
 		"peak_rate_multiplier": "peak_rate_multiplier = 1.2",
+		"billing_mode":         "billing_mode = 'credit'",
+		"credit_price":         "credit_price = 0.08",
 	} {
 		t.Run(name, func(t *testing.T) {
 			clear()

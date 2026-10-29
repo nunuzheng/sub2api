@@ -405,6 +405,7 @@ const billingModeOptions = computed<SelectOption[]>(() => [
   { value: 'per_request', label: t('admin.usage.billingModePerRequest') },
   { value: 'image', label: t('admin.usage.billingModeImage') },
   { value: 'video', label: t('admin.usage.billingModeVideo') },
+  { value: 'credit', label: t('admin.usage.billingModeCredit') },
 ])
 
 const apiKeys = ref<ApiKey[]>([])
@@ -666,6 +667,9 @@ const exportToCSV = async () => {
       'Cache Read Tokens',
       'Cache Creation Tokens',
       'Rate Multiplier',
+      'Credits',
+      'Credit Price',
+      'Credit Charge',
       'Billed Cost',
       'Original Cost',
       'First Token (ms)',
@@ -685,6 +689,11 @@ const exportToCSV = async () => {
       log.cache_read_tokens,
       log.cache_creation_tokens,
       log.rate_multiplier,
+      log.credits ?? '',
+      log.credit_price ?? '',
+      log.billing_mode === 'credit' && log.credits != null && log.credit_price != null
+        ? `${log.credits} credit × $${log.credit_price}/credit`
+        : '',
       log.actual_cost.toFixed(8),
       log.total_cost.toFixed(8),
       log.first_token_ms ?? '',

@@ -623,6 +623,34 @@ func (_c *UsageLogCreate) SetNillableCacheTTLOverridden(v *bool) *UsageLogCreate
 	return _c
 }
 
+// SetCredits sets the "credits" field.
+func (_c *UsageLogCreate) SetCredits(v float64) *UsageLogCreate {
+	_c.mutation.SetCredits(v)
+	return _c
+}
+
+// SetNillableCredits sets the "credits" field if the given value is not nil.
+func (_c *UsageLogCreate) SetNillableCredits(v *float64) *UsageLogCreate {
+	if v != nil {
+		_c.SetCredits(*v)
+	}
+	return _c
+}
+
+// SetCreditPrice sets the "credit_price" field.
+func (_c *UsageLogCreate) SetCreditPrice(v float64) *UsageLogCreate {
+	_c.mutation.SetCreditPrice(v)
+	return _c
+}
+
+// SetNillableCreditPrice sets the "credit_price" field if the given value is not nil.
+func (_c *UsageLogCreate) SetNillableCreditPrice(v *float64) *UsageLogCreate {
+	if v != nil {
+		_c.SetCreditPrice(*v)
+	}
+	return _c
+}
+
 // SetCreatedAt sets the "created_at" field.
 func (_c *UsageLogCreate) SetCreatedAt(v time.Time) *UsageLogCreate {
 	_c.mutation.SetCreatedAt(v)
@@ -1130,6 +1158,14 @@ func (_c *UsageLogCreate) createSpec() (*UsageLog, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.CacheTTLOverridden(); ok {
 		_spec.SetField(usagelog.FieldCacheTTLOverridden, field.TypeBool, value)
 		_node.CacheTTLOverridden = value
+	}
+	if value, ok := _c.mutation.Credits(); ok {
+		_spec.SetField(usagelog.FieldCredits, field.TypeFloat64, value)
+		_node.Credits = &value
+	}
+	if value, ok := _c.mutation.CreditPrice(); ok {
+		_spec.SetField(usagelog.FieldCreditPrice, field.TypeFloat64, value)
+		_node.CreditPrice = &value
 	}
 	if value, ok := _c.mutation.CreatedAt(); ok {
 		_spec.SetField(usagelog.FieldCreatedAt, field.TypeTime, value)
@@ -2079,6 +2115,54 @@ func (u *UsageLogUpsert) SetCacheTTLOverridden(v bool) *UsageLogUpsert {
 // UpdateCacheTTLOverridden sets the "cache_ttl_overridden" field to the value that was provided on create.
 func (u *UsageLogUpsert) UpdateCacheTTLOverridden() *UsageLogUpsert {
 	u.SetExcluded(usagelog.FieldCacheTTLOverridden)
+	return u
+}
+
+// SetCredits sets the "credits" field.
+func (u *UsageLogUpsert) SetCredits(v float64) *UsageLogUpsert {
+	u.Set(usagelog.FieldCredits, v)
+	return u
+}
+
+// UpdateCredits sets the "credits" field to the value that was provided on create.
+func (u *UsageLogUpsert) UpdateCredits() *UsageLogUpsert {
+	u.SetExcluded(usagelog.FieldCredits)
+	return u
+}
+
+// AddCredits adds v to the "credits" field.
+func (u *UsageLogUpsert) AddCredits(v float64) *UsageLogUpsert {
+	u.Add(usagelog.FieldCredits, v)
+	return u
+}
+
+// ClearCredits clears the value of the "credits" field.
+func (u *UsageLogUpsert) ClearCredits() *UsageLogUpsert {
+	u.SetNull(usagelog.FieldCredits)
+	return u
+}
+
+// SetCreditPrice sets the "credit_price" field.
+func (u *UsageLogUpsert) SetCreditPrice(v float64) *UsageLogUpsert {
+	u.Set(usagelog.FieldCreditPrice, v)
+	return u
+}
+
+// UpdateCreditPrice sets the "credit_price" field to the value that was provided on create.
+func (u *UsageLogUpsert) UpdateCreditPrice() *UsageLogUpsert {
+	u.SetExcluded(usagelog.FieldCreditPrice)
+	return u
+}
+
+// AddCreditPrice adds v to the "credit_price" field.
+func (u *UsageLogUpsert) AddCreditPrice(v float64) *UsageLogUpsert {
+	u.Add(usagelog.FieldCreditPrice, v)
+	return u
+}
+
+// ClearCreditPrice clears the value of the "credit_price" field.
+func (u *UsageLogUpsert) ClearCreditPrice() *UsageLogUpsert {
+	u.SetNull(usagelog.FieldCreditPrice)
 	return u
 }
 
@@ -3069,6 +3153,62 @@ func (u *UsageLogUpsertOne) SetCacheTTLOverridden(v bool) *UsageLogUpsertOne {
 func (u *UsageLogUpsertOne) UpdateCacheTTLOverridden() *UsageLogUpsertOne {
 	return u.Update(func(s *UsageLogUpsert) {
 		s.UpdateCacheTTLOverridden()
+	})
+}
+
+// SetCredits sets the "credits" field.
+func (u *UsageLogUpsertOne) SetCredits(v float64) *UsageLogUpsertOne {
+	return u.Update(func(s *UsageLogUpsert) {
+		s.SetCredits(v)
+	})
+}
+
+// AddCredits adds v to the "credits" field.
+func (u *UsageLogUpsertOne) AddCredits(v float64) *UsageLogUpsertOne {
+	return u.Update(func(s *UsageLogUpsert) {
+		s.AddCredits(v)
+	})
+}
+
+// UpdateCredits sets the "credits" field to the value that was provided on create.
+func (u *UsageLogUpsertOne) UpdateCredits() *UsageLogUpsertOne {
+	return u.Update(func(s *UsageLogUpsert) {
+		s.UpdateCredits()
+	})
+}
+
+// ClearCredits clears the value of the "credits" field.
+func (u *UsageLogUpsertOne) ClearCredits() *UsageLogUpsertOne {
+	return u.Update(func(s *UsageLogUpsert) {
+		s.ClearCredits()
+	})
+}
+
+// SetCreditPrice sets the "credit_price" field.
+func (u *UsageLogUpsertOne) SetCreditPrice(v float64) *UsageLogUpsertOne {
+	return u.Update(func(s *UsageLogUpsert) {
+		s.SetCreditPrice(v)
+	})
+}
+
+// AddCreditPrice adds v to the "credit_price" field.
+func (u *UsageLogUpsertOne) AddCreditPrice(v float64) *UsageLogUpsertOne {
+	return u.Update(func(s *UsageLogUpsert) {
+		s.AddCreditPrice(v)
+	})
+}
+
+// UpdateCreditPrice sets the "credit_price" field to the value that was provided on create.
+func (u *UsageLogUpsertOne) UpdateCreditPrice() *UsageLogUpsertOne {
+	return u.Update(func(s *UsageLogUpsert) {
+		s.UpdateCreditPrice()
+	})
+}
+
+// ClearCreditPrice clears the value of the "credit_price" field.
+func (u *UsageLogUpsertOne) ClearCreditPrice() *UsageLogUpsertOne {
+	return u.Update(func(s *UsageLogUpsert) {
+		s.ClearCreditPrice()
 	})
 }
 
@@ -4225,6 +4365,62 @@ func (u *UsageLogUpsertBulk) SetCacheTTLOverridden(v bool) *UsageLogUpsertBulk {
 func (u *UsageLogUpsertBulk) UpdateCacheTTLOverridden() *UsageLogUpsertBulk {
 	return u.Update(func(s *UsageLogUpsert) {
 		s.UpdateCacheTTLOverridden()
+	})
+}
+
+// SetCredits sets the "credits" field.
+func (u *UsageLogUpsertBulk) SetCredits(v float64) *UsageLogUpsertBulk {
+	return u.Update(func(s *UsageLogUpsert) {
+		s.SetCredits(v)
+	})
+}
+
+// AddCredits adds v to the "credits" field.
+func (u *UsageLogUpsertBulk) AddCredits(v float64) *UsageLogUpsertBulk {
+	return u.Update(func(s *UsageLogUpsert) {
+		s.AddCredits(v)
+	})
+}
+
+// UpdateCredits sets the "credits" field to the value that was provided on create.
+func (u *UsageLogUpsertBulk) UpdateCredits() *UsageLogUpsertBulk {
+	return u.Update(func(s *UsageLogUpsert) {
+		s.UpdateCredits()
+	})
+}
+
+// ClearCredits clears the value of the "credits" field.
+func (u *UsageLogUpsertBulk) ClearCredits() *UsageLogUpsertBulk {
+	return u.Update(func(s *UsageLogUpsert) {
+		s.ClearCredits()
+	})
+}
+
+// SetCreditPrice sets the "credit_price" field.
+func (u *UsageLogUpsertBulk) SetCreditPrice(v float64) *UsageLogUpsertBulk {
+	return u.Update(func(s *UsageLogUpsert) {
+		s.SetCreditPrice(v)
+	})
+}
+
+// AddCreditPrice adds v to the "credit_price" field.
+func (u *UsageLogUpsertBulk) AddCreditPrice(v float64) *UsageLogUpsertBulk {
+	return u.Update(func(s *UsageLogUpsert) {
+		s.AddCreditPrice(v)
+	})
+}
+
+// UpdateCreditPrice sets the "credit_price" field to the value that was provided on create.
+func (u *UsageLogUpsertBulk) UpdateCreditPrice() *UsageLogUpsertBulk {
+	return u.Update(func(s *UsageLogUpsert) {
+		s.UpdateCreditPrice()
+	})
+}
+
+// ClearCreditPrice clears the value of the "credit_price" field.
+func (u *UsageLogUpsertBulk) ClearCreditPrice() *UsageLogUpsertBulk {
+	return u.Update(func(s *UsageLogUpsert) {
+		s.ClearCreditPrice()
 	})
 }
 

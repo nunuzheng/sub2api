@@ -320,7 +320,8 @@ const billingModeOptions = ref<SelectOption[]>([
   { value: 'token', label: t('admin.usage.billingModeToken') },
   { value: 'per_request', label: t('admin.usage.billingModePerRequest') },
   { value: 'image', label: t('admin.usage.billingModeImage') },
-  { value: 'video', label: t('admin.usage.billingModeVideo') }
+  { value: 'video', label: t('admin.usage.billingModeVideo') },
+  { value: 'credit', label: t('admin.usage.billingModeCredit') }
 ])
 
 const upstreamModelMismatchOptions = ref<SelectOption[]>([

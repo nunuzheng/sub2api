@@ -604,6 +604,10 @@ type ClaudeUsage struct {
 	CacheCreation5mTokens    int // 5分钟缓存创建token（来自嵌套 cache_creation 对象）
 	CacheCreation1hTokens    int // 1小时缓存创建token（来自嵌套 cache_creation 对象）
 	ImageOutputTokens        int `json:"image_output_tokens,omitempty"`
+	// Credits 是上游报告的本次消耗 credit（Kiro meteringEvent.usage 或 usage.credits）。
+	// token 计费不读取该字段。
+	Credits         float64 `json:"-"`
+	creditsExplicit bool
 }
 
 // ForwardResult 转发结果

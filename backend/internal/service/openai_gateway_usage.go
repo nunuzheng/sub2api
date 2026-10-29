@@ -436,6 +436,7 @@ func (s *OpenAIGatewayService) RecordUsage(ctx context.Context, input *OpenAIRec
 	} else {
 		usageLog.RateMultiplier = multiplier
 	}
+	applyCreditBillingSnapshot(usageLog, cost)
 	usageLog.AccountRateMultiplier = &accountRateMultiplier
 	usageLog.BillingType = billingType
 	usageLog.Stream = result.Stream
@@ -590,6 +591,16 @@ func (s *OpenAIGatewayService) calculateOpenAIRecordUsageCost(
 	modelLongContextExempt bool,
 	pricingAt time.Time,
 ) (*CostBreakdown, error) {
+	if apiKey != nil {
+		credits := 0.0
+		if result != nil {
+			credits = result.Usage.Credits
+		}
+		// credit 分组不走下方 token / 图片 / 搜索价表，也不乘传入的倍率。
+		if cost := creditBillingCost(apiKey.Group, credits); cost != nil {
+			return cost, nil
+		}
+	}
 	billingModel := firstUsageBillingModel(billingModels)
 	if result != nil && result.WebSearchCalls > 0 {
 		// Codex alpha/search 网页搜索按次计费：上游不返回 usage/token 字段，单价只取

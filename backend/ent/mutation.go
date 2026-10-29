@@ -22089,6 +22089,9 @@ type GroupMutation struct {
 	i18n                                    *domain.GroupI18n
 	rate_multiplier                         *float64
 	addrate_multiplier                      *float64
+	billing_mode                            *string
+	credit_price                            *float64
+	addcredit_price                         *float64
 	peak_rate_enabled                       *bool
 	peak_start                              *string
 	peak_end                                *string
@@ -22597,6 +22600,98 @@ func (m *GroupMutation) AddedRateMultiplier() (r float64, exists bool) {
 func (m *GroupMutation) ResetRateMultiplier() {
 	m.rate_multiplier = nil
 	m.addrate_multiplier = nil
+}
+
+// SetBillingMode sets the "billing_mode" field.
+func (m *GroupMutation) SetBillingMode(s string) {
+	m.billing_mode = &s
+}
+
+// BillingMode returns the value of the "billing_mode" field in the mutation.
+func (m *GroupMutation) BillingMode() (r string, exists bool) {
+	v := m.billing_mode
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldBillingMode returns the old "billing_mode" field's value of the Group entity.
+// If the Group object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *GroupMutation) OldBillingMode(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldBillingMode is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldBillingMode requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldBillingMode: %w", err)
+	}
+	return oldValue.BillingMode, nil
+}
+
+// ResetBillingMode resets all changes to the "billing_mode" field.
+func (m *GroupMutation) ResetBillingMode() {
+	m.billing_mode = nil
+}
+
+// SetCreditPrice sets the "credit_price" field.
+func (m *GroupMutation) SetCreditPrice(f float64) {
+	m.credit_price = &f
+	m.addcredit_price = nil
+}
+
+// CreditPrice returns the value of the "credit_price" field in the mutation.
+func (m *GroupMutation) CreditPrice() (r float64, exists bool) {
+	v := m.credit_price
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreditPrice returns the old "credit_price" field's value of the Group entity.
+// If the Group object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *GroupMutation) OldCreditPrice(ctx context.Context) (v float64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreditPrice is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreditPrice requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreditPrice: %w", err)
+	}
+	return oldValue.CreditPrice, nil
+}
+
+// AddCreditPrice adds f to the "credit_price" field.
+func (m *GroupMutation) AddCreditPrice(f float64) {
+	if m.addcredit_price != nil {
+		*m.addcredit_price += f
+	} else {
+		m.addcredit_price = &f
+	}
+}
+
+// AddedCreditPrice returns the value that was added to the "credit_price" field in this mutation.
+func (m *GroupMutation) AddedCreditPrice() (r float64, exists bool) {
+	v := m.addcredit_price
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetCreditPrice resets all changes to the "credit_price" field.
+func (m *GroupMutation) ResetCreditPrice() {
+	m.credit_price = nil
+	m.addcredit_price = nil
 }
 
 // SetPeakRateEnabled sets the "peak_rate_enabled" field.
@@ -25995,7 +26090,7 @@ func (m *GroupMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *GroupMutation) Fields() []string {
-	fields := make([]string, 0, 68)
+	fields := make([]string, 0, 70)
 	if m.created_at != nil {
 		fields = append(fields, group.FieldCreatedAt)
 	}
@@ -26016,6 +26111,12 @@ func (m *GroupMutation) Fields() []string {
 	}
 	if m.rate_multiplier != nil {
 		fields = append(fields, group.FieldRateMultiplier)
+	}
+	if m.billing_mode != nil {
+		fields = append(fields, group.FieldBillingMode)
+	}
+	if m.credit_price != nil {
+		fields = append(fields, group.FieldCreditPrice)
 	}
 	if m.peak_rate_enabled != nil {
 		fields = append(fields, group.FieldPeakRateEnabled)
@@ -26222,6 +26323,10 @@ func (m *GroupMutation) Field(name string) (ent.Value, bool) {
 		return m.I18n()
 	case group.FieldRateMultiplier:
 		return m.RateMultiplier()
+	case group.FieldBillingMode:
+		return m.BillingMode()
+	case group.FieldCreditPrice:
+		return m.CreditPrice()
 	case group.FieldPeakRateEnabled:
 		return m.PeakRateEnabled()
 	case group.FieldPeakStart:
@@ -26367,6 +26472,10 @@ func (m *GroupMutation) OldField(ctx context.Context, name string) (ent.Value, e
 		return m.OldI18n(ctx)
 	case group.FieldRateMultiplier:
 		return m.OldRateMultiplier(ctx)
+	case group.FieldBillingMode:
+		return m.OldBillingMode(ctx)
+	case group.FieldCreditPrice:
+		return m.OldCreditPrice(ctx)
 	case group.FieldPeakRateEnabled:
 		return m.OldPeakRateEnabled(ctx)
 	case group.FieldPeakStart:
@@ -26546,6 +26655,20 @@ func (m *GroupMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetRateMultiplier(v)
+		return nil
+	case group.FieldBillingMode:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetBillingMode(v)
+		return nil
+	case group.FieldCreditPrice:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreditPrice(v)
 		return nil
 	case group.FieldPeakRateEnabled:
 		v, ok := value.(bool)
@@ -26985,6 +27108,9 @@ func (m *GroupMutation) AddedFields() []string {
 	if m.addrate_multiplier != nil {
 		fields = append(fields, group.FieldRateMultiplier)
 	}
+	if m.addcredit_price != nil {
+		fields = append(fields, group.FieldCreditPrice)
+	}
 	if m.addpeak_rate_multiplier != nil {
 		fields = append(fields, group.FieldPeakRateMultiplier)
 	}
@@ -27073,6 +27199,8 @@ func (m *GroupMutation) AddedField(name string) (ent.Value, bool) {
 	switch name {
 	case group.FieldRateMultiplier:
 		return m.AddedRateMultiplier()
+	case group.FieldCreditPrice:
+		return m.AddedCreditPrice()
 	case group.FieldPeakRateMultiplier:
 		return m.AddedPeakRateMultiplier()
 	case group.FieldDailyLimitUsd:
@@ -27140,6 +27268,13 @@ func (m *GroupMutation) AddField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddRateMultiplier(v)
+		return nil
+	case group.FieldCreditPrice:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddCreditPrice(v)
 		return nil
 	case group.FieldPeakRateMultiplier:
 		v, ok := value.(float64)
@@ -27505,6 +27640,12 @@ func (m *GroupMutation) ResetField(name string) error {
 		return nil
 	case group.FieldRateMultiplier:
 		m.ResetRateMultiplier()
+		return nil
+	case group.FieldBillingMode:
+		m.ResetBillingMode()
+		return nil
+	case group.FieldCreditPrice:
+		m.ResetCreditPrice()
 		return nil
 	case group.FieldPeakRateEnabled:
 		m.ResetPeakRateEnabled()
@@ -44787,6 +44928,10 @@ type UsageLogMutation struct {
 	video_duration_seconds       *int
 	addvideo_duration_seconds    *int
 	cache_ttl_overridden         *bool
+	credits                      *float64
+	addcredits                   *float64
+	credit_price                 *float64
+	addcredit_price              *float64
 	created_at                   *time.Time
 	clearedFields                map[string]struct{}
 	user                         *int64
@@ -47269,6 +47414,146 @@ func (m *UsageLogMutation) ResetCacheTTLOverridden() {
 	m.cache_ttl_overridden = nil
 }
 
+// SetCredits sets the "credits" field.
+func (m *UsageLogMutation) SetCredits(f float64) {
+	m.credits = &f
+	m.addcredits = nil
+}
+
+// Credits returns the value of the "credits" field in the mutation.
+func (m *UsageLogMutation) Credits() (r float64, exists bool) {
+	v := m.credits
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCredits returns the old "credits" field's value of the UsageLog entity.
+// If the UsageLog object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UsageLogMutation) OldCredits(ctx context.Context) (v *float64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCredits is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCredits requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCredits: %w", err)
+	}
+	return oldValue.Credits, nil
+}
+
+// AddCredits adds f to the "credits" field.
+func (m *UsageLogMutation) AddCredits(f float64) {
+	if m.addcredits != nil {
+		*m.addcredits += f
+	} else {
+		m.addcredits = &f
+	}
+}
+
+// AddedCredits returns the value that was added to the "credits" field in this mutation.
+func (m *UsageLogMutation) AddedCredits() (r float64, exists bool) {
+	v := m.addcredits
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearCredits clears the value of the "credits" field.
+func (m *UsageLogMutation) ClearCredits() {
+	m.credits = nil
+	m.addcredits = nil
+	m.clearedFields[usagelog.FieldCredits] = struct{}{}
+}
+
+// CreditsCleared returns if the "credits" field was cleared in this mutation.
+func (m *UsageLogMutation) CreditsCleared() bool {
+	_, ok := m.clearedFields[usagelog.FieldCredits]
+	return ok
+}
+
+// ResetCredits resets all changes to the "credits" field.
+func (m *UsageLogMutation) ResetCredits() {
+	m.credits = nil
+	m.addcredits = nil
+	delete(m.clearedFields, usagelog.FieldCredits)
+}
+
+// SetCreditPrice sets the "credit_price" field.
+func (m *UsageLogMutation) SetCreditPrice(f float64) {
+	m.credit_price = &f
+	m.addcredit_price = nil
+}
+
+// CreditPrice returns the value of the "credit_price" field in the mutation.
+func (m *UsageLogMutation) CreditPrice() (r float64, exists bool) {
+	v := m.credit_price
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreditPrice returns the old "credit_price" field's value of the UsageLog entity.
+// If the UsageLog object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UsageLogMutation) OldCreditPrice(ctx context.Context) (v *float64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreditPrice is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreditPrice requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreditPrice: %w", err)
+	}
+	return oldValue.CreditPrice, nil
+}
+
+// AddCreditPrice adds f to the "credit_price" field.
+func (m *UsageLogMutation) AddCreditPrice(f float64) {
+	if m.addcredit_price != nil {
+		*m.addcredit_price += f
+	} else {
+		m.addcredit_price = &f
+	}
+}
+
+// AddedCreditPrice returns the value that was added to the "credit_price" field in this mutation.
+func (m *UsageLogMutation) AddedCreditPrice() (r float64, exists bool) {
+	v := m.addcredit_price
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearCreditPrice clears the value of the "credit_price" field.
+func (m *UsageLogMutation) ClearCreditPrice() {
+	m.credit_price = nil
+	m.addcredit_price = nil
+	m.clearedFields[usagelog.FieldCreditPrice] = struct{}{}
+}
+
+// CreditPriceCleared returns if the "credit_price" field was cleared in this mutation.
+func (m *UsageLogMutation) CreditPriceCleared() bool {
+	_, ok := m.clearedFields[usagelog.FieldCreditPrice]
+	return ok
+}
+
+// ResetCreditPrice resets all changes to the "credit_price" field.
+func (m *UsageLogMutation) ResetCreditPrice() {
+	m.credit_price = nil
+	m.addcredit_price = nil
+	delete(m.clearedFields, usagelog.FieldCreditPrice)
+}
+
 // SetCreatedAt sets the "created_at" field.
 func (m *UsageLogMutation) SetCreatedAt(t time.Time) {
 	m.created_at = &t
@@ -47474,7 +47759,7 @@ func (m *UsageLogMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *UsageLogMutation) Fields() []string {
-	fields := make([]string, 0, 47)
+	fields := make([]string, 0, 49)
 	if m.user != nil {
 		fields = append(fields, usagelog.FieldUserID)
 	}
@@ -47613,6 +47898,12 @@ func (m *UsageLogMutation) Fields() []string {
 	if m.cache_ttl_overridden != nil {
 		fields = append(fields, usagelog.FieldCacheTTLOverridden)
 	}
+	if m.credits != nil {
+		fields = append(fields, usagelog.FieldCredits)
+	}
+	if m.credit_price != nil {
+		fields = append(fields, usagelog.FieldCreditPrice)
+	}
 	if m.created_at != nil {
 		fields = append(fields, usagelog.FieldCreatedAt)
 	}
@@ -47716,6 +48007,10 @@ func (m *UsageLogMutation) Field(name string) (ent.Value, bool) {
 		return m.VideoDurationSeconds()
 	case usagelog.FieldCacheTTLOverridden:
 		return m.CacheTTLOverridden()
+	case usagelog.FieldCredits:
+		return m.Credits()
+	case usagelog.FieldCreditPrice:
+		return m.CreditPrice()
 	case usagelog.FieldCreatedAt:
 		return m.CreatedAt()
 	}
@@ -47819,6 +48114,10 @@ func (m *UsageLogMutation) OldField(ctx context.Context, name string) (ent.Value
 		return m.OldVideoDurationSeconds(ctx)
 	case usagelog.FieldCacheTTLOverridden:
 		return m.OldCacheTTLOverridden(ctx)
+	case usagelog.FieldCredits:
+		return m.OldCredits(ctx)
+	case usagelog.FieldCreditPrice:
+		return m.OldCreditPrice(ctx)
 	case usagelog.FieldCreatedAt:
 		return m.OldCreatedAt(ctx)
 	}
@@ -48152,6 +48451,20 @@ func (m *UsageLogMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetCacheTTLOverridden(v)
 		return nil
+	case usagelog.FieldCredits:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCredits(v)
+		return nil
+	case usagelog.FieldCreditPrice:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreditPrice(v)
+		return nil
 	case usagelog.FieldCreatedAt:
 		v, ok := value.(time.Time)
 		if !ok {
@@ -48230,6 +48543,12 @@ func (m *UsageLogMutation) AddedFields() []string {
 	if m.addvideo_duration_seconds != nil {
 		fields = append(fields, usagelog.FieldVideoDurationSeconds)
 	}
+	if m.addcredits != nil {
+		fields = append(fields, usagelog.FieldCredits)
+	}
+	if m.addcredit_price != nil {
+		fields = append(fields, usagelog.FieldCreditPrice)
+	}
 	return fields
 }
 
@@ -48280,6 +48599,10 @@ func (m *UsageLogMutation) AddedField(name string) (ent.Value, bool) {
 		return m.AddedVideoCount()
 	case usagelog.FieldVideoDurationSeconds:
 		return m.AddedVideoDurationSeconds()
+	case usagelog.FieldCredits:
+		return m.AddedCredits()
+	case usagelog.FieldCreditPrice:
+		return m.AddedCreditPrice()
 	}
 	return nil, false
 }
@@ -48436,6 +48759,20 @@ func (m *UsageLogMutation) AddField(name string, value ent.Value) error {
 		}
 		m.AddVideoDurationSeconds(v)
 		return nil
+	case usagelog.FieldCredits:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddCredits(v)
+		return nil
+	case usagelog.FieldCreditPrice:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddCreditPrice(v)
+		return nil
 	}
 	return fmt.Errorf("unknown UsageLog numeric field %s", name)
 }
@@ -48509,6 +48846,12 @@ func (m *UsageLogMutation) ClearedFields() []string {
 	}
 	if m.FieldCleared(usagelog.FieldVideoDurationSeconds) {
 		fields = append(fields, usagelog.FieldVideoDurationSeconds)
+	}
+	if m.FieldCleared(usagelog.FieldCredits) {
+		fields = append(fields, usagelog.FieldCredits)
+	}
+	if m.FieldCleared(usagelog.FieldCreditPrice) {
+		fields = append(fields, usagelog.FieldCreditPrice)
 	}
 	return fields
 }
@@ -48589,6 +48932,12 @@ func (m *UsageLogMutation) ClearField(name string) error {
 		return nil
 	case usagelog.FieldVideoDurationSeconds:
 		m.ClearVideoDurationSeconds()
+		return nil
+	case usagelog.FieldCredits:
+		m.ClearCredits()
+		return nil
+	case usagelog.FieldCreditPrice:
+		m.ClearCreditPrice()
 		return nil
 	}
 	return fmt.Errorf("unknown UsageLog nullable field %s", name)
@@ -48735,6 +49084,12 @@ func (m *UsageLogMutation) ResetField(name string) error {
 		return nil
 	case usagelog.FieldCacheTTLOverridden:
 		m.ResetCacheTTLOverridden()
+		return nil
+	case usagelog.FieldCredits:
+		m.ResetCredits()
+		return nil
+	case usagelog.FieldCreditPrice:
+		m.ResetCreditPrice()
 		return nil
 	case usagelog.FieldCreatedAt:
 		m.ResetCreatedAt()

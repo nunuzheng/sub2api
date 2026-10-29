@@ -636,6 +636,7 @@ export default {
       billingModePerRequest: '按次',
       billingModeImage: '按图片',
       billingModeVideo: '按视频',
+      billingModeCredit: '按 Credit',
       videoPrice: '视频单价',
       unitPerSecond: '/ 秒',
       inputPrice: '输入',

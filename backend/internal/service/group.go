@@ -22,6 +22,12 @@ type Group struct {
 	I18n           GroupI18n // 名称与描述的界面语言译文；缺失的语言沿用 Name/Description
 	Platform       string
 	RateMultiplier float64
+	// BillingMode 客户扣费方式：token（默认，既有价表×倍率）或 credit（上游 credit × CreditPrice）。
+	// 空值与 token 等价，不改变既有扣费。
+	BillingMode string
+	// CreditPrice 是 credit 模式的单价（USD/credit），由后台配置，不写死。
+	// token 模式不读取该字段。
+	CreditPrice float64
 	// 高峰时段倍率：peak_rate_enabled 为 true 且当前时刻处于 [PeakStart, PeakEnd) 时，
 	// token 计费倍率额外乘以 PeakRateMultiplier。详见 PeakMultiplierAt。
 	PeakRateEnabled    bool

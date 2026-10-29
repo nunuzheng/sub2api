@@ -96,8 +96,12 @@ type Group struct {
 	Description    string  `json:"description"`
 	Platform       string  `json:"platform"`
 	RateMultiplier float64 `json:"rate_multiplier"`
-	IsExclusive    bool    `json:"is_exclusive"`
-	Status         string  `json:"status"`
+	// BillingMode is token (default) or credit.
+	BillingMode string `json:"billing_mode"`
+	// CreditPrice is USD per consumed credit. Token mode does not use it.
+	CreditPrice float64 `json:"credit_price"`
+	IsExclusive bool    `json:"is_exclusive"`
+	Status      string  `json:"status"`
 
 	// I18n 名称与描述的各语言译文。只有管理端输出；用户侧接口经 Localized 把
 	// name/description 换成请求语言的版本后清空本字段。
@@ -623,14 +627,18 @@ type UsageLog struct {
 	CacheCreation5mTokens int `json:"cache_creation_5m_tokens"`
 	CacheCreation1hTokens int `json:"cache_creation_1h_tokens"`
 
-	InputCost                 float64 `json:"input_cost"`
-	OutputCost                float64 `json:"output_cost"`
-	CacheCreationCost         float64 `json:"cache_creation_cost"`
-	CacheReadCost             float64 `json:"cache_read_cost"`
-	TotalCost                 float64 `json:"total_cost"`
-	ActualCost                float64 `json:"actual_cost"`
-	RateMultiplier            float64 `json:"rate_multiplier"`
-	LongContextBillingApplied bool    `json:"long_context_billing_applied"`
+	InputCost         float64 `json:"input_cost"`
+	OutputCost        float64 `json:"output_cost"`
+	CacheCreationCost float64 `json:"cache_creation_cost"`
+	CacheReadCost     float64 `json:"cache_read_cost"`
+	TotalCost         float64 `json:"total_cost"`
+	ActualCost        float64 `json:"actual_cost"`
+	// Credits and CreditPrice replay the credit-mode charge: credits × price.
+	// Omitted on token-mode rows.
+	Credits                   *float64 `json:"credits,omitempty"`
+	CreditPrice               *float64 `json:"credit_price,omitempty"`
+	RateMultiplier            float64  `json:"rate_multiplier"`
+	LongContextBillingApplied bool     `json:"long_context_billing_applied"`
 
 	BillingType  int8   `json:"billing_type"`
 	RequestType  string `json:"request_type"`

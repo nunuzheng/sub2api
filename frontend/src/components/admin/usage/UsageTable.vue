@@ -226,6 +226,13 @@
                 </div>
               </div>
             </div>
+            <div
+              v-if="row.billing_mode === 'credit' && row.credits != null && row.credit_price != null"
+              data-testid="credit-charge-formula"
+              class="mt-0.5 text-[11px] text-gray-500 dark:text-gray-400"
+            >
+              {{ formatCreditCharge(row.credits, row.credit_price) }}
+            </div>
             <div v-if="showAccountBilling && row.account_rate_multiplier != null" class="mt-0.5 text-[11px] text-orange-500 dark:text-orange-400">
               A ${{ accountBilled(row).toFixed(6) }}
             </div>
@@ -557,6 +564,7 @@ import {
   getBillingModeLabel,
   getBillingModeBadgeClass,
   isImageUsage,
+  formatCreditCharge,
   getDisplayBillingMode,
   imageUnitPrice,
 } from '@/utils/billingMode'

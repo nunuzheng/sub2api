@@ -1020,6 +1020,13 @@ func (s *GatewayService) calculateRecordUsageCost(
 	imageMultiplier float64,
 	pricingAt time.Time,
 ) *CostBreakdown {
+	// credit 分组按上游消耗 credit × 分组单价扣客户，不进入 token/图片价表，也不乘 rate_multiplier。
+	// token 分组（默认）走下面的原路径。
+	if apiKey != nil && result != nil {
+		if cost := creditBillingCost(apiKey.Group, result.Usage.Credits); cost != nil {
+			return cost
+		}
+	}
 	// 图片生成：渠道定价为 token 计费时走 token 路径，否则走图片计费。
 	// 分组按张计费开关只对专用图片端点生效，混合请求仍按 token 计费。
 	if result.ImageCount > 0 {
@@ -1372,6 +1379,7 @@ func (s *GatewayService) buildRecordUsageLog(
 	if result.ImageCount > 0 && (cost == nil || cost.BillingMode != string(BillingModeToken)) {
 		usageLog.RateMultiplier = imageMultiplier
 	}
+	applyCreditBillingSnapshot(usageLog, cost)
 	if cost != nil {
 		usageLog.InputCost = cost.InputCost
 		usageLog.OutputCost = cost.OutputCost

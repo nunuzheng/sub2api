@@ -401,6 +401,14 @@ func (s *adminServiceImpl) CreateGroup(ctx context.Context, input *CreateGroupIn
 	if input.RateMultiplier <= 0 {
 		return nil, errors.New("rate_multiplier must be > 0")
 	}
+	billingMode, err := NormalizeGroupBillingMode(input.BillingMode)
+	if err != nil {
+		return nil, infraerrors.BadRequest("INVALID_BILLING_MODE", err.Error())
+	}
+	creditPrice, err := NormalizeGroupCreditPrice(input.CreditPrice)
+	if err != nil {
+		return nil, infraerrors.BadRequest("INVALID_CREDIT_PRICE", err.Error())
+	}
 	i18n, err := normalizeGroupI18n(input.I18n)
 	if err != nil {
 		return nil, err
@@ -581,6 +589,8 @@ func (s *adminServiceImpl) CreateGroup(ctx context.Context, input *CreateGroupIn
 		I18n:                            i18n,
 		Platform:                        platform,
 		RateMultiplier:                  input.RateMultiplier,
+		BillingMode:                     billingMode,
+		CreditPrice:                     creditPrice,
 		IsExclusive:                     input.IsExclusive,
 		Status:                          StatusActive,
 		SubscriptionType:                subscriptionType,
@@ -806,6 +816,20 @@ func (s *adminServiceImpl) UpdateGroup(ctx context.Context, id int64, input *Upd
 			return nil, errors.New("rate_multiplier must be > 0")
 		}
 		group.RateMultiplier = *input.RateMultiplier
+	}
+	if input.BillingMode != nil {
+		billingMode, modeErr := NormalizeGroupBillingMode(*input.BillingMode)
+		if modeErr != nil {
+			return nil, infraerrors.BadRequest("INVALID_BILLING_MODE", modeErr.Error())
+		}
+		group.BillingMode = billingMode
+	}
+	if input.CreditPrice != nil {
+		creditPrice, priceErr := NormalizeGroupCreditPrice(*input.CreditPrice)
+		if priceErr != nil {
+			return nil, infraerrors.BadRequest("INVALID_CREDIT_PRICE", priceErr.Error())
+		}
+		group.CreditPrice = creditPrice
 	}
 	if input.IsExclusive != nil {
 		group.IsExclusive = *input.IsExclusive

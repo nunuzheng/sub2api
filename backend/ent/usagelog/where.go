@@ -280,6 +280,16 @@ func CacheTTLOverridden(v bool) predicate.UsageLog {
 	return predicate.UsageLog(sql.FieldEQ(FieldCacheTTLOverridden, v))
 }
 
+// Credits applies equality check predicate on the "credits" field. It's identical to CreditsEQ.
+func Credits(v float64) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldEQ(FieldCredits, v))
+}
+
+// CreditPrice applies equality check predicate on the "credit_price" field. It's identical to CreditPriceEQ.
+func CreditPrice(v float64) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldEQ(FieldCreditPrice, v))
+}
+
 // CreatedAt applies equality check predicate on the "created_at" field. It's identical to CreatedAtEQ.
 func CreatedAt(v time.Time) predicate.UsageLog {
 	return predicate.UsageLog(sql.FieldEQ(FieldCreatedAt, v))
@@ -2458,6 +2468,106 @@ func CacheTTLOverriddenEQ(v bool) predicate.UsageLog {
 // CacheTTLOverriddenNEQ applies the NEQ predicate on the "cache_ttl_overridden" field.
 func CacheTTLOverriddenNEQ(v bool) predicate.UsageLog {
 	return predicate.UsageLog(sql.FieldNEQ(FieldCacheTTLOverridden, v))
+}
+
+// CreditsEQ applies the EQ predicate on the "credits" field.
+func CreditsEQ(v float64) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldEQ(FieldCredits, v))
+}
+
+// CreditsNEQ applies the NEQ predicate on the "credits" field.
+func CreditsNEQ(v float64) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldNEQ(FieldCredits, v))
+}
+
+// CreditsIn applies the In predicate on the "credits" field.
+func CreditsIn(vs ...float64) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldIn(FieldCredits, vs...))
+}
+
+// CreditsNotIn applies the NotIn predicate on the "credits" field.
+func CreditsNotIn(vs ...float64) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldNotIn(FieldCredits, vs...))
+}
+
+// CreditsGT applies the GT predicate on the "credits" field.
+func CreditsGT(v float64) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldGT(FieldCredits, v))
+}
+
+// CreditsGTE applies the GTE predicate on the "credits" field.
+func CreditsGTE(v float64) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldGTE(FieldCredits, v))
+}
+
+// CreditsLT applies the LT predicate on the "credits" field.
+func CreditsLT(v float64) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldLT(FieldCredits, v))
+}
+
+// CreditsLTE applies the LTE predicate on the "credits" field.
+func CreditsLTE(v float64) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldLTE(FieldCredits, v))
+}
+
+// CreditsIsNil applies the IsNil predicate on the "credits" field.
+func CreditsIsNil() predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldIsNull(FieldCredits))
+}
+
+// CreditsNotNil applies the NotNil predicate on the "credits" field.
+func CreditsNotNil() predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldNotNull(FieldCredits))
+}
+
+// CreditPriceEQ applies the EQ predicate on the "credit_price" field.
+func CreditPriceEQ(v float64) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldEQ(FieldCreditPrice, v))
+}
+
+// CreditPriceNEQ applies the NEQ predicate on the "credit_price" field.
+func CreditPriceNEQ(v float64) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldNEQ(FieldCreditPrice, v))
+}
+
+// CreditPriceIn applies the In predicate on the "credit_price" field.
+func CreditPriceIn(vs ...float64) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldIn(FieldCreditPrice, vs...))
+}
+
+// CreditPriceNotIn applies the NotIn predicate on the "credit_price" field.
+func CreditPriceNotIn(vs ...float64) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldNotIn(FieldCreditPrice, vs...))
+}
+
+// CreditPriceGT applies the GT predicate on the "credit_price" field.
+func CreditPriceGT(v float64) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldGT(FieldCreditPrice, v))
+}
+
+// CreditPriceGTE applies the GTE predicate on the "credit_price" field.
+func CreditPriceGTE(v float64) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldGTE(FieldCreditPrice, v))
+}
+
+// CreditPriceLT applies the LT predicate on the "credit_price" field.
+func CreditPriceLT(v float64) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldLT(FieldCreditPrice, v))
+}
+
+// CreditPriceLTE applies the LTE predicate on the "credit_price" field.
+func CreditPriceLTE(v float64) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldLTE(FieldCreditPrice, v))
+}
+
+// CreditPriceIsNil applies the IsNil predicate on the "credit_price" field.
+func CreditPriceIsNil() predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldIsNull(FieldCreditPrice))
+}
+
+// CreditPriceNotNil applies the NotNil predicate on the "credit_price" field.
+func CreditPriceNotNil() predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldNotNull(FieldCreditPrice))
 }
 
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.

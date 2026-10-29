@@ -16,6 +16,7 @@ import (
 
 	"github.com/Wei-Shaw/sub2api/internal/pkg/apicompat"
 	"github.com/Wei-Shaw/sub2api/internal/pkg/logger"
+	"github.com/Wei-Shaw/sub2api/internal/pkg/upstreamcredit"
 	"github.com/Wei-Shaw/sub2api/internal/pkg/xai"
 	"github.com/Wei-Shaw/sub2api/internal/util/responseheaders"
 	"github.com/gin-gonic/gin"
@@ -1232,18 +1233,20 @@ func (s *OpenAIGatewayService) parseSSEUsageBytesWithType(data []byte, eventType
 	// Usage is absent from nearly every delta event. Avoid full JSON validation
 	// and four gjson path scans on that hot path while retaining progressive
 	// usage from compatible upstreams on any event type.
-	if !bytes.Contains(data, []byte(`"usage"`)) {
+	if !bytes.Contains(data, []byte(`"usage"`)) && !bytes.Contains(data, []byte("credit")) {
 		return
 	}
 	parsedUsage, ok := extractOpenAIUsageFromJSONBytes(data)
 	if !ok {
+		absorbOpenAICredits(usage, data)
 		return
 	}
 	if openAIStreamEventTypeIsTerminal(effectiveOpenAISSEEventType(data, eventType)) {
 		if !openAIUsageHasTokens(&parsedUsage) && openAIUsageHasTokens(usage) {
+			absorbOpenAICredits(usage, data)
 			return
 		}
-		*usage = parsedUsage
+		assignOpenAIUsagePreserveCredits(usage, parsedUsage)
 		return
 	}
 	mergeOpenAIUsageNonZero(usage, parsedUsage)
@@ -1277,6 +1280,12 @@ func mergeOpenAIUsageNonZero(dst *OpenAIUsage, src OpenAIUsage) {
 	}
 	if src.ImageOutputTokens > 0 {
 		dst.ImageOutputTokens = src.ImageOutputTokens
+	}
+	if src.CreditsExplicit {
+		dst.Credits = src.Credits
+		dst.CreditsExplicit = true
+	} else if src.Credits > 0 && !dst.CreditsExplicit {
+		dst.Credits += src.Credits
 	}
 }
 
@@ -1367,6 +1376,11 @@ func extractOpenAIUsageFromJSONBytes(body []byte) (OpenAIUsage, bool) {
 	for _, candidate := range candidates {
 		if usage, ok := openAIUsageFromGJSON(gjson.GetBytes(body, candidate.usagePath)); ok {
 			mergeHostedImageGenToolUsage(gjson.GetBytes(body, candidate.imageUsagePath), &usage)
+			if !usage.CreditsExplicit {
+				if sum := upstreamcredit.SumMetering(body); sum > 0 {
+					usage.Credits += sum
+				}
+			}
 			return usage, true
 		}
 	}
@@ -1555,14 +1569,19 @@ func openAIUsageFromGJSON(value gjson.Result) (OpenAIUsage, bool) {
 		value.Get("input_tokens_details.image_tokens"),
 		value.Get("prompt_tokens_details.image_tokens"),
 	)
-	return OpenAIUsage{
+	usage := OpenAIUsage{
 		InputTokens:              int(inputTokens),
 		ImageInputTokens:         imageInputTokens,
 		OutputTokens:             int(outputTokens),
 		CacheCreationInputTokens: cacheCreationTokens,
 		CacheReadInputTokens:     cacheReadTokens,
 		ImageOutputTokens:        int(imageOutputTokens),
-	}, true
+	}
+	if snap, ok := upstreamcredit.ExplicitSnapshot([]byte(`{"usage":` + value.Raw + `}`)); ok {
+		usage.Credits = normalizeCreditQuantity(snap)
+		usage.CreditsExplicit = true
+	}
+	return usage, true
 }
 
 func openAICacheReadTokensFromUsage(value gjson.Result) int {
@@ -1746,7 +1765,7 @@ func (s *OpenAIGatewayService) handleSSEToJSON(resp *http.Response, c *gin.Conte
 	usage := s.parseSSEUsageFromBody(bodyText)
 	if ok {
 		if parsedUsage, parsed := extractOpenAIUsageFromJSONBytes(finalResponse); parsed {
-			*usage = parsedUsage
+			assignOpenAIUsagePreserveCredits(usage, parsedUsage)
 		}
 		// When the terminal event has an empty output array, reconstruct
 		// output from accumulated delta events so the client gets full content.

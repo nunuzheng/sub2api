@@ -627,6 +627,25 @@
           <p class="input-hint">{{ t("admin.groups.rateMultiplierHint") }}</p>
         </div>
         <div>
+          <label class="input-label">{{ t("admin.groups.form.billingMode") }}</label>
+          <select v-model="createForm.billing_mode" class="input">
+            <option value="token">{{ t("admin.groups.form.billingModeToken") }}</option>
+            <option value="credit">{{ t("admin.groups.form.billingModeCredit") }}</option>
+          </select>
+          <p class="input-hint">{{ t("admin.groups.form.billingModeHint") }}</p>
+        </div>
+        <div v-if="createForm.billing_mode === 'credit'">
+          <label class="input-label">{{ t("admin.groups.form.creditPrice") }}</label>
+          <input
+            v-model.number="createForm.credit_price"
+            type="number"
+            step="0.00000001"
+            min="0"
+            class="input"
+          />
+          <p class="input-hint">{{ t("admin.groups.form.creditPriceHint") }}</p>
+        </div>
+        <div>
           <label class="input-label">{{ t("admin.groups.form.rpmLimit") }}</label>
           <input
             v-model.number="createForm.rpm_limit"
@@ -2277,6 +2296,25 @@
             class="input"
             data-tour="group-form-multiplier"
           />
+        </div>
+        <div>
+          <label class="input-label">{{ t("admin.groups.form.billingMode") }}</label>
+          <select v-model="editForm.billing_mode" class="input">
+            <option value="token">{{ t("admin.groups.form.billingModeToken") }}</option>
+            <option value="credit">{{ t("admin.groups.form.billingModeCredit") }}</option>
+          </select>
+          <p class="input-hint">{{ t("admin.groups.form.billingModeHint") }}</p>
+        </div>
+        <div v-if="editForm.billing_mode === 'credit'">
+          <label class="input-label">{{ t("admin.groups.form.creditPrice") }}</label>
+          <input
+            v-model.number="editForm.credit_price"
+            type="number"
+            step="0.00000001"
+            min="0"
+            class="input"
+          />
+          <p class="input-hint">{{ t("admin.groups.form.creditPriceHint") }}</p>
         </div>
         <div>
           <label class="input-label">{{ t("admin.groups.form.rpmLimit") }}</label>
@@ -4975,6 +5013,8 @@ const createForm = reactive({
   i18n: {} as GroupI18n,
   platform: "anthropic" as GroupPlatform,
   rate_multiplier: 1.0,
+  billing_mode: "token" as "token" | "credit",
+  credit_price: 0,
   is_exclusive: false,
   subscription_type: "standard" as SubscriptionType,
   daily_limit_usd: null as number | null,
@@ -5341,6 +5381,8 @@ const editForm = reactive({
   i18n: {} as GroupI18n,
   platform: "anthropic" as GroupPlatform,
   rate_multiplier: 1.0,
+  billing_mode: "token" as "token" | "credit",
+  credit_price: 0,
   is_exclusive: false,
   status: "active" as "active" | "inactive",
   subscription_type: "standard" as SubscriptionType,
@@ -5818,6 +5860,8 @@ const closeCreateModal = () => {
   createForm.i18n = {};
   createForm.platform = "anthropic";
   createForm.rate_multiplier = 1.0;
+  createForm.billing_mode = "token";
+  createForm.credit_price = 0;
   createForm.is_exclusive = false;
   createForm.subscription_type = "standard";
   createForm.daily_limit_usd = null;
@@ -6068,6 +6112,11 @@ const handleCreateGroup = async () => {
     requestData.peak_rate_multiplier = normalizeRateMultiplier(
       createForm.peak_rate_multiplier,
     );
+    requestData.billing_mode = createForm.billing_mode === "credit" ? "credit" : "token";
+    requestData.credit_price = Number(createForm.credit_price);
+    if (!Number.isFinite(requestData.credit_price) || requestData.credit_price < 0) {
+      requestData.credit_price = 0;
+    }
     const payload = authStore.isSimpleMode
       ? {
           name: createForm.name,
@@ -6107,6 +6156,8 @@ const handleEdit = async (group: AdminGroup) => {
   );
   editForm.platform = group.platform;
   editForm.rate_multiplier = group.rate_multiplier;
+  editForm.billing_mode = group.billing_mode === "credit" ? "credit" : "token";
+  editForm.credit_price = group.credit_price ?? 0;
   editForm.is_exclusive = group.is_exclusive;
   editForm.status = group.status;
   editForm.subscription_type = group.subscription_type || "standard";
@@ -6427,6 +6478,11 @@ const handleUpdateGroup = async () => {
     payload.peak_rate_multiplier = normalizeRateMultiplier(
       editForm.peak_rate_multiplier,
     );
+    payload.billing_mode = editForm.billing_mode === "credit" ? "credit" : "token";
+    payload.credit_price = Number(editForm.credit_price);
+    if (!Number.isFinite(payload.credit_price) || payload.credit_price < 0) {
+      payload.credit_price = 0;
+    }
     const requestData = authStore.isSimpleMode
       ? {
           name: editForm.name,

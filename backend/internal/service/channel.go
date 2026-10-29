@@ -28,9 +28,10 @@ func (m BillingMode) IsValid() bool {
 }
 
 // IsValidUsageFilter 检查 BillingMode 是否可用于使用记录筛选。
+// credit 是分组扣费模式，只出现在 usage_logs，不是渠道模型定价模式。
 func (m BillingMode) IsValidUsageFilter() bool {
 	switch m {
-	case BillingModeToken, BillingModePerRequest, BillingModeImage, BillingModeVideo, "":
+	case BillingModeToken, BillingModePerRequest, BillingModeImage, BillingModeVideo, GroupBillingModeCredit, "":
 		return true
 	}
 	return false

@@ -631,6 +631,7 @@ export default {
       billingModePerRequest: 'Per Request',
       billingModeImage: 'Per Image',
       billingModeVideo: 'Per Video',
+      billingModeCredit: 'Credit',
       videoPrice: 'Video Price',
       unitPerSecond: '/ second',
       inputPrice: 'Input',

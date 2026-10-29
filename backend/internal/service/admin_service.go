@@ -233,11 +233,15 @@ type AdminBoundAuthIdentityChannel struct {
 }
 
 type CreateGroupInput struct {
-	Name                      string
-	Description               string
-	I18n                      GroupI18n // 名称与描述的界面语言译文
-	Platform                  string
-	RateMultiplier            float64
+	Name           string
+	Description    string
+	I18n           GroupI18n // 名称与描述的界面语言译文
+	Platform       string
+	RateMultiplier float64
+	// BillingMode is token (default) or credit. Empty means token.
+	BillingMode string
+	// CreditPrice is USD per consumed credit. Ignored by token mode.
+	CreditPrice               float64
 	IsExclusive               bool
 	SubscriptionType          string   // standard/subscription
 	DailyLimitUSD             *float64 // 日限额 (USD)
@@ -315,11 +319,15 @@ type CreateGroupInput struct {
 }
 
 type UpdateGroupInput struct {
-	Name                      string
-	Description               *string
-	I18n                      *GroupI18n // nil 表示不修改；非 nil 整体替换
-	Platform                  string
-	RateMultiplier            *float64 // 使用指针以支持设置为0
+	Name           string
+	Description    *string
+	I18n           *GroupI18n // nil 表示不修改；非 nil 整体替换
+	Platform       string
+	RateMultiplier *float64 // 使用指针以支持设置为0
+	// BillingMode nil 不修改。空字符串归一为 token。
+	BillingMode *string
+	// CreditPrice nil 不修改。
+	CreditPrice               *float64
 	IsExclusive               *bool
 	Status                    string
 	SubscriptionType          string   // standard/subscription

@@ -15,6 +15,7 @@ import (
 	coderws "github.com/coder/websocket"
 	"github.com/tidwall/gjson"
 
+	"github.com/Wei-Shaw/sub2api/internal/pkg/upstreamcredit"
 	"github.com/Wei-Shaw/sub2api/internal/pkg/xai"
 )
 
@@ -31,6 +32,7 @@ type Usage struct {
 	CacheCreationInputTokens int
 	CacheReadInputTokens     int
 	ImageOutputTokens        int
+	Credits                  float64
 }
 
 type RelayResult struct {
@@ -103,6 +105,7 @@ type RelayTraceEvent struct {
 type relayState struct {
 	usage                   Usage
 	turnUsage               Usage
+	consumedCredits         upstreamcredit.State
 	turnWroteDownstream     atomic.Bool
 	requestModelMu          sync.RWMutex
 	requestModel            string
@@ -780,6 +783,7 @@ func observeUpstreamMessage(
 			}
 		}
 	}
+	state.consumedCredits.Absorb(message)
 	parsedUsage := parseUsageAndAccumulate(state, message, eventType, onUsageParseFailure)
 	observed := observedUpstreamEvent{
 		eventType:  eventType,
@@ -1216,6 +1220,9 @@ func finalizeRelayTurnUsage(state *relayState) Usage {
 	state.usage.CacheCreationInputTokens += turnUsage.CacheCreationInputTokens
 	state.usage.CacheReadInputTokens += turnUsage.CacheReadInputTokens
 	state.usage.ImageOutputTokens += turnUsage.ImageOutputTokens
+	turnUsage.Credits = state.consumedCredits.Credits
+	state.usage.Credits += turnUsage.Credits
+	state.consumedCredits = upstreamcredit.State{}
 	state.turnUsage = Usage{}
 	return turnUsage
 }

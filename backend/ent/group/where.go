@@ -85,6 +85,16 @@ func RateMultiplier(v float64) predicate.Group {
 	return predicate.Group(sql.FieldEQ(FieldRateMultiplier, v))
 }
 
+// BillingMode applies equality check predicate on the "billing_mode" field. It's identical to BillingModeEQ.
+func BillingMode(v string) predicate.Group {
+	return predicate.Group(sql.FieldEQ(FieldBillingMode, v))
+}
+
+// CreditPrice applies equality check predicate on the "credit_price" field. It's identical to CreditPriceEQ.
+func CreditPrice(v float64) predicate.Group {
+	return predicate.Group(sql.FieldEQ(FieldCreditPrice, v))
+}
+
 // PeakRateEnabled applies equality check predicate on the "peak_rate_enabled" field. It's identical to PeakRateEnabledEQ.
 func PeakRateEnabled(v bool) predicate.Group {
 	return predicate.Group(sql.FieldEQ(FieldPeakRateEnabled, v))
@@ -658,6 +668,111 @@ func RateMultiplierLT(v float64) predicate.Group {
 // RateMultiplierLTE applies the LTE predicate on the "rate_multiplier" field.
 func RateMultiplierLTE(v float64) predicate.Group {
 	return predicate.Group(sql.FieldLTE(FieldRateMultiplier, v))
+}
+
+// BillingModeEQ applies the EQ predicate on the "billing_mode" field.
+func BillingModeEQ(v string) predicate.Group {
+	return predicate.Group(sql.FieldEQ(FieldBillingMode, v))
+}
+
+// BillingModeNEQ applies the NEQ predicate on the "billing_mode" field.
+func BillingModeNEQ(v string) predicate.Group {
+	return predicate.Group(sql.FieldNEQ(FieldBillingMode, v))
+}
+
+// BillingModeIn applies the In predicate on the "billing_mode" field.
+func BillingModeIn(vs ...string) predicate.Group {
+	return predicate.Group(sql.FieldIn(FieldBillingMode, vs...))
+}
+
+// BillingModeNotIn applies the NotIn predicate on the "billing_mode" field.
+func BillingModeNotIn(vs ...string) predicate.Group {
+	return predicate.Group(sql.FieldNotIn(FieldBillingMode, vs...))
+}
+
+// BillingModeGT applies the GT predicate on the "billing_mode" field.
+func BillingModeGT(v string) predicate.Group {
+	return predicate.Group(sql.FieldGT(FieldBillingMode, v))
+}
+
+// BillingModeGTE applies the GTE predicate on the "billing_mode" field.
+func BillingModeGTE(v string) predicate.Group {
+	return predicate.Group(sql.FieldGTE(FieldBillingMode, v))
+}
+
+// BillingModeLT applies the LT predicate on the "billing_mode" field.
+func BillingModeLT(v string) predicate.Group {
+	return predicate.Group(sql.FieldLT(FieldBillingMode, v))
+}
+
+// BillingModeLTE applies the LTE predicate on the "billing_mode" field.
+func BillingModeLTE(v string) predicate.Group {
+	return predicate.Group(sql.FieldLTE(FieldBillingMode, v))
+}
+
+// BillingModeContains applies the Contains predicate on the "billing_mode" field.
+func BillingModeContains(v string) predicate.Group {
+	return predicate.Group(sql.FieldContains(FieldBillingMode, v))
+}
+
+// BillingModeHasPrefix applies the HasPrefix predicate on the "billing_mode" field.
+func BillingModeHasPrefix(v string) predicate.Group {
+	return predicate.Group(sql.FieldHasPrefix(FieldBillingMode, v))
+}
+
+// BillingModeHasSuffix applies the HasSuffix predicate on the "billing_mode" field.
+func BillingModeHasSuffix(v string) predicate.Group {
+	return predicate.Group(sql.FieldHasSuffix(FieldBillingMode, v))
+}
+
+// BillingModeEqualFold applies the EqualFold predicate on the "billing_mode" field.
+func BillingModeEqualFold(v string) predicate.Group {
+	return predicate.Group(sql.FieldEqualFold(FieldBillingMode, v))
+}
+
+// BillingModeContainsFold applies the ContainsFold predicate on the "billing_mode" field.
+func BillingModeContainsFold(v string) predicate.Group {
+	return predicate.Group(sql.FieldContainsFold(FieldBillingMode, v))
+}
+
+// CreditPriceEQ applies the EQ predicate on the "credit_price" field.
+func CreditPriceEQ(v float64) predicate.Group {
+	return predicate.Group(sql.FieldEQ(FieldCreditPrice, v))
+}
+
+// CreditPriceNEQ applies the NEQ predicate on the "credit_price" field.
+func CreditPriceNEQ(v float64) predicate.Group {
+	return predicate.Group(sql.FieldNEQ(FieldCreditPrice, v))
+}
+
+// CreditPriceIn applies the In predicate on the "credit_price" field.
+func CreditPriceIn(vs ...float64) predicate.Group {
+	return predicate.Group(sql.FieldIn(FieldCreditPrice, vs...))
+}
+
+// CreditPriceNotIn applies the NotIn predicate on the "credit_price" field.
+func CreditPriceNotIn(vs ...float64) predicate.Group {
+	return predicate.Group(sql.FieldNotIn(FieldCreditPrice, vs...))
+}
+
+// CreditPriceGT applies the GT predicate on the "credit_price" field.
+func CreditPriceGT(v float64) predicate.Group {
+	return predicate.Group(sql.FieldGT(FieldCreditPrice, v))
+}
+
+// CreditPriceGTE applies the GTE predicate on the "credit_price" field.
+func CreditPriceGTE(v float64) predicate.Group {
+	return predicate.Group(sql.FieldGTE(FieldCreditPrice, v))
+}
+
+// CreditPriceLT applies the LT predicate on the "credit_price" field.
+func CreditPriceLT(v float64) predicate.Group {
+	return predicate.Group(sql.FieldLT(FieldCreditPrice, v))
+}
+
+// CreditPriceLTE applies the LTE predicate on the "credit_price" field.
+func CreditPriceLTE(v float64) predicate.Group {
+	return predicate.Group(sql.FieldLTE(FieldCreditPrice, v))
 }
 
 // PeakRateEnabledEQ applies the EQ predicate on the "peak_rate_enabled" field.
