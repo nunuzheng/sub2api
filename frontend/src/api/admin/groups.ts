@@ -470,6 +470,27 @@ export async function getCapacitySummary(): Promise<
   return data
 }
 
+export interface GroupCreditPriceEntry {
+  user_id: number
+  user_name: string
+  user_email: string
+  credit_unit_price: number
+}
+
+export async function getGroupCreditPrices(id: number): Promise<GroupCreditPriceEntry[]> {
+  const { data } = await apiClient.get<{ entries: GroupCreditPriceEntry[] }>(
+    `/admin/groups/${id}/credit-prices`
+  )
+  return data.entries ?? []
+}
+
+export async function replaceGroupCreditPrices(
+  id: number,
+  entries: Array<{ user_id: number; credit_unit_price: number }>
+): Promise<void> {
+  await apiClient.put(`/admin/groups/${id}/credit-prices`, { entries })
+}
+
 export const groupsAPI = {
   list,
   getAll,
@@ -490,6 +511,8 @@ export const groupsAPI = {
   updateCompositeRoute,
   deleteCompositeRoute,
   previewCompositeRoute,
+  getGroupCreditPrices,
+  replaceGroupCreditPrices,
   getGroupRateMultipliers,
   clearGroupRateMultipliers,
   batchSetGroupRateMultipliers,

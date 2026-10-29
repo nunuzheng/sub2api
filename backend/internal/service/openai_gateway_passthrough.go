@@ -2365,9 +2365,10 @@ func (s *OpenAIGatewayService) handleNonStreamingResponsePassthrough(
 	}
 	// 二进制 EventStream（Kiro meteringEvent）不一定能被 JSON/SSE usage 解析看见。
 	// 只在还没有 credit 快照时补扫，避免和上面的解析重复累加。
-	if usage != nil && !usage.CreditsExplicit && usage.Credits == 0 {
+	if usage != nil && !usage.CreditsSeen {
 		if sum := upstreamcredit.SumMetering(body); sum > 0 {
 			usage.Credits = sum
+			usage.CreditsSeen = true
 		}
 	}
 	logOpenAISuccessMissingUsage(ctx, c, account, resp, usage, "json", false)

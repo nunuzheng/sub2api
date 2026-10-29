@@ -11,7 +11,11 @@
     <span :class="truncate ? 'truncate' : 'min-w-0 whitespace-normal [overflow-wrap:anywhere]'">{{ name }}</span>
     <!-- Right side label -->
     <span v-if="showLabel" :class="labelClass">
-      <template v-if="hasCustomRate">
+      <template v-if="creditPriceLabel">
+        <span>{{ creditCustom ? t('groups.creditCustom') : t('groups.creditBadge') }}</span>
+        <span class="font-bold">{{ creditPriceLabel }}</span>
+      </template>
+      <template v-else-if="hasCustomRate">
         <!-- 原倍率删除线 + 专属倍率高亮 -->
         <span class="line-through opacity-50 mr-0.5">{{ rateMultiplier }}x</span>
         <span class="font-bold">{{ userRateMultiplier }}x</span>
@@ -54,6 +58,10 @@ interface Props {
    * 只关心费率、不关心有效期的场景）。
    */
   alwaysShowRate?: boolean
+  /** When set, the badge shows $/credit instead of a rate multiplier. */
+  creditUnitPrice?: number | null
+  /** True when the shown $/credit is this user's override. */
+  creditCustom?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -63,7 +71,8 @@ const props = withDefaults(defineProps<Props>(), {
   daysRemaining: null,
   userRateMultiplier: null,
   peakRateEnabled: false,
-  alwaysShowRate: false
+  alwaysShowRate: false,
+  creditCustom: false
 })
 
 const { t } = useI18n()
@@ -82,7 +91,14 @@ const hasCustomRate = computed(() => {
 
 const appStore = useAppStore()
 
+const creditPriceLabel = computed(() => {
+  if (props.creditUnitPrice == null || !Number.isFinite(props.creditUnitPrice)) return ''
+  const text = props.creditUnitPrice.toFixed(8).replace(/0+$/, '').replace(/\.$/, '')
+  return `$${text}/credit`
+})
+
 const hasPeakRate = computed(() => {
+  if (creditPriceLabel.value) return false
   return Boolean(props.showRate && props.peakRateEnabled && props.peakStart && props.peakEnd)
 })
 
@@ -108,11 +124,12 @@ const showLabel = computed(() => {
   // 订阅类型：显示天数或"订阅"
   if (isSubscription.value) return true
   // 标准类型：显示倍率（包括专属倍率）
-  return props.rateMultiplier !== undefined || hasCustomRate.value
+  return creditPriceLabel.value !== '' || props.rateMultiplier !== undefined || hasCustomRate.value
 })
 
 // Label text
 const labelText = computed(() => {
+  if (creditPriceLabel.value) return creditPriceLabel.value
   const rateLabel = props.rateMultiplier !== undefined ? `${props.rateMultiplier}x` : ''
   if (isSubscription.value && !props.alwaysShowRate) {
     // 如果有剩余天数，显示天数

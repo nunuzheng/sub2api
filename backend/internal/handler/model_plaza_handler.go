@@ -95,8 +95,10 @@ type modelPlazaGroup struct {
 	VideoRateIndependent bool    `json:"video_rate_independent"`
 	VideoRateMultiplier  float64 `json:"video_rate_multiplier"`
 	// 分组是否启用长上下文阶梯计费；关闭时模型实付列只展示最低档/基础价。
-	LongContextPricingEnabled bool              `json:"long_context_pricing_enabled"`
-	Models                    []modelPlazaModel `json:"models"`
+	LongContextPricingEnabled bool                        `json:"long_context_pricing_enabled"`
+	CreditBilling             *service.GroupCreditBilling `json:"credit_billing,omitempty"`
+	UserCreditUnitPrice       *float64                    `json:"user_credit_unit_price,omitempty"`
+	Models                    []modelPlazaModel           `json:"models"`
 }
 
 // modelPlazaResponse 广场页响应。
@@ -134,6 +136,7 @@ func (h *ModelPlazaHandler) Get(c *gin.Context) {
 	var allowedGroups map[int64]struct{}
 	var restrictPublicGroups bool
 	var userRates map[int64]float64
+	var userCreditPrices map[int64]float64
 	if authed {
 		allowedGroups, restrictPublicGroups, err = h.apiKeyService.GetUserGroupVisibility(c.Request.Context(), subject.UserID)
 		if err != nil {
@@ -147,6 +150,11 @@ func (h *ModelPlazaHandler) Get(c *gin.Context) {
 			slog.Warn("model_plaza_user_rates_failed", "error", err, "user_id", subject.UserID)
 			userRates = nil
 		}
+		userCreditPrices, err = h.apiKeyService.GetUserCreditUnitPrices(c.Request.Context(), subject.UserID)
+		if err != nil {
+			slog.Warn("model_plaza_user_credit_prices_failed", "error", err, "user_id", subject.UserID)
+			userCreditPrices = nil
+		}
 	}
 
 	visible := filterPlazaVisibleGroups(groups, allowedGroups, restrictPublicGroups)
@@ -154,7 +162,7 @@ func (h *ModelPlazaHandler) Get(c *gin.Context) {
 	// 广场可匿名访问，分组文案随请求语言变化，提示中间缓存按语言区分。
 	// 追加而非覆盖：CORS 中间件已为具体来源写入 Vary: Origin。
 	c.Writer.Header().Add("Vary", "Accept-Language")
-	out := toLocalizedModelPlazaGroups(visible, userRates, c.GetHeader("Accept-Language"))
+	out := toLocalizedModelPlazaGroups(visible, userRates, userCreditPrices, c.GetHeader("Accept-Language"))
 	response.Success(c, modelPlazaResponse{
 		Description: rt.Description,
 		Groups:      out,
@@ -186,10 +194,10 @@ func filterPlazaVisibleGroups(
 }
 
 // toLocalizedModelPlazaGroups 转换可见分组，并把名称与描述换成请求首选语言的版本。
-func toLocalizedModelPlazaGroups(visible []service.PlazaGroup, userRates map[int64]float64, acceptLanguage string) []modelPlazaGroup {
+func toLocalizedModelPlazaGroups(visible []service.PlazaGroup, userRates, userCreditPrices map[int64]float64, acceptLanguage string) []modelPlazaGroup {
 	out := make([]modelPlazaGroup, 0, len(visible))
 	for i := range visible {
-		group := toModelPlazaGroupDTO(&visible[i], userRates)
+		group := toModelPlazaGroupDTO(&visible[i], userRates, userCreditPrices)
 		group.Name, group.Description = visible[i].I18n.Localize(acceptLanguage, group.Name, group.Description)
 		out = append(out, group)
 	}
@@ -197,7 +205,7 @@ func toLocalizedModelPlazaGroups(visible []service.PlazaGroup, userRates map[int
 }
 
 // toModelPlazaGroupDTO 将 service 层广场分组映射为白名单 DTO,并合并用户专属倍率。
-func toModelPlazaGroupDTO(g *service.PlazaGroup, userRates map[int64]float64) modelPlazaGroup {
+func toModelPlazaGroupDTO(g *service.PlazaGroup, userRates, userCreditPrices map[int64]float64) modelPlazaGroup {
 	models := make([]modelPlazaModel, 0, len(g.Models))
 	for i := range g.Models {
 		m := &g.Models[i]
@@ -229,8 +237,15 @@ func toModelPlazaGroupDTO(g *service.PlazaGroup, userRates map[int64]float64) mo
 		LongContextPricingEnabled: g.LongContextPricingEnabled,
 		Models:                    models,
 	}
+	if g.CreditBilling.Enabled {
+		pub := g.CreditBilling.Public()
+		dto.CreditBilling = &pub
+	}
 	if rate, ok := userRates[g.ID]; ok {
 		dto.UserRateMultiplier = &rate
+	}
+	if price, ok := userCreditPrices[g.ID]; ok {
+		dto.UserCreditUnitPrice = &price
 	}
 	return dto
 }

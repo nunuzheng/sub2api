@@ -96,12 +96,11 @@ type Group struct {
 	Description    string  `json:"description"`
 	Platform       string  `json:"platform"`
 	RateMultiplier float64 `json:"rate_multiplier"`
-	// BillingMode is token (default) or credit.
-	BillingMode string `json:"billing_mode"`
-	// CreditPrice is USD per consumed credit. Token mode does not use it.
-	CreditPrice float64 `json:"credit_price"`
-	IsExclusive bool    `json:"is_exclusive"`
-	Status      string  `json:"status"`
+	// CreditBilling is present when the group charges by upstream credits.
+	// cost_per_credit is filled only on admin responses.
+	CreditBilling *service.GroupCreditBilling `json:"credit_billing,omitempty"`
+	IsExclusive   bool                        `json:"is_exclusive"`
+	Status        string                      `json:"status"`
 
 	// I18n 名称与描述的各语言译文。只有管理端输出；用户侧接口经 Localized 把
 	// name/description 换成请求语言的版本后清空本字段。

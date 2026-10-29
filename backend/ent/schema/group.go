@@ -52,16 +52,11 @@ func (Group) Fields() []ent.Field {
 		field.Float("rate_multiplier").
 			SchemaType(map[string]string{dialect.Postgres: "decimal(10,4)"}).
 			Default(1.0),
-		// 客户扣费方式：token（默认）或 credit（上游 credit × credit_price）。
-		field.String("billing_mode").
-			MaxLen(20).
-			Default("token").
-			Comment("客户扣费方式：token（默认，价表×倍率）或 credit（消耗 credit × credit_price，不叠 rate_multiplier）"),
-		field.Float("credit_price").
-			SchemaType(map[string]string{dialect.Postgres: "decimal(20,8)"}).
-			Default(0).
-			Min(0).
-			Comment("credit 模式每 credit 单价（USD）；后台可改，不写死。token 模式不使用"),
+		field.JSON("credit_billing", domain.GroupCreditBilling{}).
+			Optional().
+			Default(domain.GroupCreditBilling{}).
+			SchemaType(map[string]string{dialect.Postgres: "jsonb"}).
+			Comment("分组 Credit 计费对象：enabled/unit_price/started_at/cost_per_credit。未启用时按 token 计费"),
 		// 高峰时段倍率（added by migration 158）
 		field.Bool("peak_rate_enabled").
 			Default(false).

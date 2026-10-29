@@ -64,10 +64,8 @@ type APIKeyAuthGroupSnapshot struct {
 	Status           string  `json:"status"`
 	SubscriptionType string  `json:"subscription_type"`
 	RateMultiplier   float64 `json:"rate_multiplier"`
-	// BillingMode / CreditPrice 必须随认证快照缓存，否则 credit 分组会按 token 价表扣费。
-	// 空 BillingMode 视为 token。
-	BillingMode                     string                        `json:"billing_mode,omitempty"`
-	CreditPrice                     float64                       `json:"credit_price,omitempty"`
+	// CreditBilling 必须随认证快照缓存，否则 credit 分组会按 token 价表扣费。
+	CreditBilling                   GroupCreditBilling            `json:"credit_billing,omitempty"`
 	DailyLimitUSD                   *float64                      `json:"daily_limit_usd,omitempty"`
 	WeeklyLimitUSD                  *float64                      `json:"weekly_limit_usd,omitempty"`
 	MonthlyLimitUSD                 *float64                      `json:"monthly_limit_usd,omitempty"`

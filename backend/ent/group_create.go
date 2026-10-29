@@ -112,30 +112,16 @@ func (_c *GroupCreate) SetNillableRateMultiplier(v *float64) *GroupCreate {
 	return _c
 }
 
-// SetBillingMode sets the "billing_mode" field.
-func (_c *GroupCreate) SetBillingMode(v string) *GroupCreate {
-	_c.mutation.SetBillingMode(v)
+// SetCreditBilling sets the "credit_billing" field.
+func (_c *GroupCreate) SetCreditBilling(v domain.GroupCreditBilling) *GroupCreate {
+	_c.mutation.SetCreditBilling(v)
 	return _c
 }
 
-// SetNillableBillingMode sets the "billing_mode" field if the given value is not nil.
-func (_c *GroupCreate) SetNillableBillingMode(v *string) *GroupCreate {
+// SetNillableCreditBilling sets the "credit_billing" field if the given value is not nil.
+func (_c *GroupCreate) SetNillableCreditBilling(v *domain.GroupCreditBilling) *GroupCreate {
 	if v != nil {
-		_c.SetBillingMode(*v)
-	}
-	return _c
-}
-
-// SetCreditPrice sets the "credit_price" field.
-func (_c *GroupCreate) SetCreditPrice(v float64) *GroupCreate {
-	_c.mutation.SetCreditPrice(v)
-	return _c
-}
-
-// SetNillableCreditPrice sets the "credit_price" field if the given value is not nil.
-func (_c *GroupCreate) SetNillableCreditPrice(v *float64) *GroupCreate {
-	if v != nil {
-		_c.SetCreditPrice(*v)
+		_c.SetCreditBilling(*v)
 	}
 	return _c
 }
@@ -1103,13 +1089,9 @@ func (_c *GroupCreate) defaults() error {
 		v := group.DefaultRateMultiplier
 		_c.mutation.SetRateMultiplier(v)
 	}
-	if _, ok := _c.mutation.BillingMode(); !ok {
-		v := group.DefaultBillingMode
-		_c.mutation.SetBillingMode(v)
-	}
-	if _, ok := _c.mutation.CreditPrice(); !ok {
-		v := group.DefaultCreditPrice
-		_c.mutation.SetCreditPrice(v)
+	if _, ok := _c.mutation.CreditBilling(); !ok {
+		v := group.DefaultCreditBilling
+		_c.mutation.SetCreditBilling(v)
 	}
 	if _, ok := _c.mutation.PeakRateEnabled(); !ok {
 		v := group.DefaultPeakRateEnabled
@@ -1299,22 +1281,6 @@ func (_c *GroupCreate) check() error {
 	}
 	if _, ok := _c.mutation.RateMultiplier(); !ok {
 		return &ValidationError{Name: "rate_multiplier", err: errors.New(`ent: missing required field "Group.rate_multiplier"`)}
-	}
-	if _, ok := _c.mutation.BillingMode(); !ok {
-		return &ValidationError{Name: "billing_mode", err: errors.New(`ent: missing required field "Group.billing_mode"`)}
-	}
-	if v, ok := _c.mutation.BillingMode(); ok {
-		if err := group.BillingModeValidator(v); err != nil {
-			return &ValidationError{Name: "billing_mode", err: fmt.Errorf(`ent: validator failed for field "Group.billing_mode": %w`, err)}
-		}
-	}
-	if _, ok := _c.mutation.CreditPrice(); !ok {
-		return &ValidationError{Name: "credit_price", err: errors.New(`ent: missing required field "Group.credit_price"`)}
-	}
-	if v, ok := _c.mutation.CreditPrice(); ok {
-		if err := group.CreditPriceValidator(v); err != nil {
-			return &ValidationError{Name: "credit_price", err: fmt.Errorf(`ent: validator failed for field "Group.credit_price": %w`, err)}
-		}
 	}
 	if _, ok := _c.mutation.PeakRateEnabled(); !ok {
 		return &ValidationError{Name: "peak_rate_enabled", err: errors.New(`ent: missing required field "Group.peak_rate_enabled"`)}
@@ -1559,13 +1525,9 @@ func (_c *GroupCreate) createSpec() (*Group, *sqlgraph.CreateSpec) {
 		_spec.SetField(group.FieldRateMultiplier, field.TypeFloat64, value)
 		_node.RateMultiplier = value
 	}
-	if value, ok := _c.mutation.BillingMode(); ok {
-		_spec.SetField(group.FieldBillingMode, field.TypeString, value)
-		_node.BillingMode = value
-	}
-	if value, ok := _c.mutation.CreditPrice(); ok {
-		_spec.SetField(group.FieldCreditPrice, field.TypeFloat64, value)
-		_node.CreditPrice = value
+	if value, ok := _c.mutation.CreditBilling(); ok {
+		_spec.SetField(group.FieldCreditBilling, field.TypeJSON, value)
+		_node.CreditBilling = value
 	}
 	if value, ok := _c.mutation.PeakRateEnabled(); ok {
 		_spec.SetField(group.FieldPeakRateEnabled, field.TypeBool, value)
@@ -2057,33 +2019,21 @@ func (u *GroupUpsert) AddRateMultiplier(v float64) *GroupUpsert {
 	return u
 }
 
-// SetBillingMode sets the "billing_mode" field.
-func (u *GroupUpsert) SetBillingMode(v string) *GroupUpsert {
-	u.Set(group.FieldBillingMode, v)
+// SetCreditBilling sets the "credit_billing" field.
+func (u *GroupUpsert) SetCreditBilling(v domain.GroupCreditBilling) *GroupUpsert {
+	u.Set(group.FieldCreditBilling, v)
 	return u
 }
 
-// UpdateBillingMode sets the "billing_mode" field to the value that was provided on create.
-func (u *GroupUpsert) UpdateBillingMode() *GroupUpsert {
-	u.SetExcluded(group.FieldBillingMode)
+// UpdateCreditBilling sets the "credit_billing" field to the value that was provided on create.
+func (u *GroupUpsert) UpdateCreditBilling() *GroupUpsert {
+	u.SetExcluded(group.FieldCreditBilling)
 	return u
 }
 
-// SetCreditPrice sets the "credit_price" field.
-func (u *GroupUpsert) SetCreditPrice(v float64) *GroupUpsert {
-	u.Set(group.FieldCreditPrice, v)
-	return u
-}
-
-// UpdateCreditPrice sets the "credit_price" field to the value that was provided on create.
-func (u *GroupUpsert) UpdateCreditPrice() *GroupUpsert {
-	u.SetExcluded(group.FieldCreditPrice)
-	return u
-}
-
-// AddCreditPrice adds v to the "credit_price" field.
-func (u *GroupUpsert) AddCreditPrice(v float64) *GroupUpsert {
-	u.Add(group.FieldCreditPrice, v)
+// ClearCreditBilling clears the value of the "credit_billing" field.
+func (u *GroupUpsert) ClearCreditBilling() *GroupUpsert {
+	u.SetNull(group.FieldCreditBilling)
 	return u
 }
 
@@ -3230,38 +3180,24 @@ func (u *GroupUpsertOne) UpdateRateMultiplier() *GroupUpsertOne {
 	})
 }
 
-// SetBillingMode sets the "billing_mode" field.
-func (u *GroupUpsertOne) SetBillingMode(v string) *GroupUpsertOne {
+// SetCreditBilling sets the "credit_billing" field.
+func (u *GroupUpsertOne) SetCreditBilling(v domain.GroupCreditBilling) *GroupUpsertOne {
 	return u.Update(func(s *GroupUpsert) {
-		s.SetBillingMode(v)
+		s.SetCreditBilling(v)
 	})
 }
 
-// UpdateBillingMode sets the "billing_mode" field to the value that was provided on create.
-func (u *GroupUpsertOne) UpdateBillingMode() *GroupUpsertOne {
+// UpdateCreditBilling sets the "credit_billing" field to the value that was provided on create.
+func (u *GroupUpsertOne) UpdateCreditBilling() *GroupUpsertOne {
 	return u.Update(func(s *GroupUpsert) {
-		s.UpdateBillingMode()
+		s.UpdateCreditBilling()
 	})
 }
 
-// SetCreditPrice sets the "credit_price" field.
-func (u *GroupUpsertOne) SetCreditPrice(v float64) *GroupUpsertOne {
+// ClearCreditBilling clears the value of the "credit_billing" field.
+func (u *GroupUpsertOne) ClearCreditBilling() *GroupUpsertOne {
 	return u.Update(func(s *GroupUpsert) {
-		s.SetCreditPrice(v)
-	})
-}
-
-// AddCreditPrice adds v to the "credit_price" field.
-func (u *GroupUpsertOne) AddCreditPrice(v float64) *GroupUpsertOne {
-	return u.Update(func(s *GroupUpsert) {
-		s.AddCreditPrice(v)
-	})
-}
-
-// UpdateCreditPrice sets the "credit_price" field to the value that was provided on create.
-func (u *GroupUpsertOne) UpdateCreditPrice() *GroupUpsertOne {
-	return u.Update(func(s *GroupUpsert) {
-		s.UpdateCreditPrice()
+		s.ClearCreditBilling()
 	})
 }
 
@@ -4739,38 +4675,24 @@ func (u *GroupUpsertBulk) UpdateRateMultiplier() *GroupUpsertBulk {
 	})
 }
 
-// SetBillingMode sets the "billing_mode" field.
-func (u *GroupUpsertBulk) SetBillingMode(v string) *GroupUpsertBulk {
+// SetCreditBilling sets the "credit_billing" field.
+func (u *GroupUpsertBulk) SetCreditBilling(v domain.GroupCreditBilling) *GroupUpsertBulk {
 	return u.Update(func(s *GroupUpsert) {
-		s.SetBillingMode(v)
+		s.SetCreditBilling(v)
 	})
 }
 
-// UpdateBillingMode sets the "billing_mode" field to the value that was provided on create.
-func (u *GroupUpsertBulk) UpdateBillingMode() *GroupUpsertBulk {
+// UpdateCreditBilling sets the "credit_billing" field to the value that was provided on create.
+func (u *GroupUpsertBulk) UpdateCreditBilling() *GroupUpsertBulk {
 	return u.Update(func(s *GroupUpsert) {
-		s.UpdateBillingMode()
+		s.UpdateCreditBilling()
 	})
 }
 
-// SetCreditPrice sets the "credit_price" field.
-func (u *GroupUpsertBulk) SetCreditPrice(v float64) *GroupUpsertBulk {
+// ClearCreditBilling clears the value of the "credit_billing" field.
+func (u *GroupUpsertBulk) ClearCreditBilling() *GroupUpsertBulk {
 	return u.Update(func(s *GroupUpsert) {
-		s.SetCreditPrice(v)
-	})
-}
-
-// AddCreditPrice adds v to the "credit_price" field.
-func (u *GroupUpsertBulk) AddCreditPrice(v float64) *GroupUpsertBulk {
-	return u.Update(func(s *GroupUpsert) {
-		s.AddCreditPrice(v)
-	})
-}
-
-// UpdateCreditPrice sets the "credit_price" field to the value that was provided on create.
-func (u *GroupUpsertBulk) UpdateCreditPrice() *GroupUpsertBulk {
-	return u.Update(func(s *GroupUpsert) {
-		s.UpdateCreditPrice()
+		s.ClearCreditBilling()
 	})
 }
 

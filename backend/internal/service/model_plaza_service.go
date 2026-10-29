@@ -58,6 +58,7 @@ type PlazaGroup struct {
 	VideoRateMultiplier  float64
 	// LongContextPricingEnabled 分组是否按上下文长度应用阶梯价；关闭时模型展示的是最低档。
 	LongContextPricingEnabled bool
+	CreditBilling             GroupCreditBilling
 	Models                    []PlazaModel
 }
 
@@ -140,6 +141,7 @@ func (s *ModelPlazaService) ListGroups(ctx context.Context) ([]PlazaGroup, error
 			VideoRateIndependent:      g.VideoRateIndependent,
 			VideoRateMultiplier:       g.VideoRateMultiplier,
 			LongContextPricingEnabled: g.LongContextPricingEnabled,
+			CreditBilling:             g.CreditBilling,
 		}
 		groupEnt[g.ID] = g
 		order = append(order, g.ID)

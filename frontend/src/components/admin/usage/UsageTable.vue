@@ -227,8 +227,8 @@
               </div>
             </div>
             <div
-              v-if="row.billing_mode === 'credit' && row.credits != null && row.credit_price != null"
-              data-testid="credit-charge-formula"
+              v-if="row.billing_mode === 'kiro_credit' && row.credits != null && row.credit_price != null"
+              data-testid="credit-charge"
               class="mt-0.5 text-[11px] text-gray-500 dark:text-gray-400"
             >
               {{ formatCreditCharge(row.credits, row.credit_price) }}

@@ -22089,9 +22089,7 @@ type GroupMutation struct {
 	i18n                                    *domain.GroupI18n
 	rate_multiplier                         *float64
 	addrate_multiplier                      *float64
-	billing_mode                            *string
-	credit_price                            *float64
-	addcredit_price                         *float64
+	credit_billing                          *domain.GroupCreditBilling
 	peak_rate_enabled                       *bool
 	peak_start                              *string
 	peak_end                                *string
@@ -22602,96 +22600,53 @@ func (m *GroupMutation) ResetRateMultiplier() {
 	m.addrate_multiplier = nil
 }
 
-// SetBillingMode sets the "billing_mode" field.
-func (m *GroupMutation) SetBillingMode(s string) {
-	m.billing_mode = &s
+// SetCreditBilling sets the "credit_billing" field.
+func (m *GroupMutation) SetCreditBilling(dcb domain.GroupCreditBilling) {
+	m.credit_billing = &dcb
 }
 
-// BillingMode returns the value of the "billing_mode" field in the mutation.
-func (m *GroupMutation) BillingMode() (r string, exists bool) {
-	v := m.billing_mode
+// CreditBilling returns the value of the "credit_billing" field in the mutation.
+func (m *GroupMutation) CreditBilling() (r domain.GroupCreditBilling, exists bool) {
+	v := m.credit_billing
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldBillingMode returns the old "billing_mode" field's value of the Group entity.
+// OldCreditBilling returns the old "credit_billing" field's value of the Group entity.
 // If the Group object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *GroupMutation) OldBillingMode(ctx context.Context) (v string, err error) {
+func (m *GroupMutation) OldCreditBilling(ctx context.Context) (v domain.GroupCreditBilling, err error) {
 	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldBillingMode is only allowed on UpdateOne operations")
+		return v, errors.New("OldCreditBilling is only allowed on UpdateOne operations")
 	}
 	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldBillingMode requires an ID field in the mutation")
+		return v, errors.New("OldCreditBilling requires an ID field in the mutation")
 	}
 	oldValue, err := m.oldValue(ctx)
 	if err != nil {
-		return v, fmt.Errorf("querying old value for OldBillingMode: %w", err)
+		return v, fmt.Errorf("querying old value for OldCreditBilling: %w", err)
 	}
-	return oldValue.BillingMode, nil
+	return oldValue.CreditBilling, nil
 }
 
-// ResetBillingMode resets all changes to the "billing_mode" field.
-func (m *GroupMutation) ResetBillingMode() {
-	m.billing_mode = nil
+// ClearCreditBilling clears the value of the "credit_billing" field.
+func (m *GroupMutation) ClearCreditBilling() {
+	m.credit_billing = nil
+	m.clearedFields[group.FieldCreditBilling] = struct{}{}
 }
 
-// SetCreditPrice sets the "credit_price" field.
-func (m *GroupMutation) SetCreditPrice(f float64) {
-	m.credit_price = &f
-	m.addcredit_price = nil
+// CreditBillingCleared returns if the "credit_billing" field was cleared in this mutation.
+func (m *GroupMutation) CreditBillingCleared() bool {
+	_, ok := m.clearedFields[group.FieldCreditBilling]
+	return ok
 }
 
-// CreditPrice returns the value of the "credit_price" field in the mutation.
-func (m *GroupMutation) CreditPrice() (r float64, exists bool) {
-	v := m.credit_price
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldCreditPrice returns the old "credit_price" field's value of the Group entity.
-// If the Group object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *GroupMutation) OldCreditPrice(ctx context.Context) (v float64, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldCreditPrice is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldCreditPrice requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldCreditPrice: %w", err)
-	}
-	return oldValue.CreditPrice, nil
-}
-
-// AddCreditPrice adds f to the "credit_price" field.
-func (m *GroupMutation) AddCreditPrice(f float64) {
-	if m.addcredit_price != nil {
-		*m.addcredit_price += f
-	} else {
-		m.addcredit_price = &f
-	}
-}
-
-// AddedCreditPrice returns the value that was added to the "credit_price" field in this mutation.
-func (m *GroupMutation) AddedCreditPrice() (r float64, exists bool) {
-	v := m.addcredit_price
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// ResetCreditPrice resets all changes to the "credit_price" field.
-func (m *GroupMutation) ResetCreditPrice() {
-	m.credit_price = nil
-	m.addcredit_price = nil
+// ResetCreditBilling resets all changes to the "credit_billing" field.
+func (m *GroupMutation) ResetCreditBilling() {
+	m.credit_billing = nil
+	delete(m.clearedFields, group.FieldCreditBilling)
 }
 
 // SetPeakRateEnabled sets the "peak_rate_enabled" field.
@@ -26090,7 +26045,7 @@ func (m *GroupMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *GroupMutation) Fields() []string {
-	fields := make([]string, 0, 70)
+	fields := make([]string, 0, 69)
 	if m.created_at != nil {
 		fields = append(fields, group.FieldCreatedAt)
 	}
@@ -26112,11 +26067,8 @@ func (m *GroupMutation) Fields() []string {
 	if m.rate_multiplier != nil {
 		fields = append(fields, group.FieldRateMultiplier)
 	}
-	if m.billing_mode != nil {
-		fields = append(fields, group.FieldBillingMode)
-	}
-	if m.credit_price != nil {
-		fields = append(fields, group.FieldCreditPrice)
+	if m.credit_billing != nil {
+		fields = append(fields, group.FieldCreditBilling)
 	}
 	if m.peak_rate_enabled != nil {
 		fields = append(fields, group.FieldPeakRateEnabled)
@@ -26323,10 +26275,8 @@ func (m *GroupMutation) Field(name string) (ent.Value, bool) {
 		return m.I18n()
 	case group.FieldRateMultiplier:
 		return m.RateMultiplier()
-	case group.FieldBillingMode:
-		return m.BillingMode()
-	case group.FieldCreditPrice:
-		return m.CreditPrice()
+	case group.FieldCreditBilling:
+		return m.CreditBilling()
 	case group.FieldPeakRateEnabled:
 		return m.PeakRateEnabled()
 	case group.FieldPeakStart:
@@ -26472,10 +26422,8 @@ func (m *GroupMutation) OldField(ctx context.Context, name string) (ent.Value, e
 		return m.OldI18n(ctx)
 	case group.FieldRateMultiplier:
 		return m.OldRateMultiplier(ctx)
-	case group.FieldBillingMode:
-		return m.OldBillingMode(ctx)
-	case group.FieldCreditPrice:
-		return m.OldCreditPrice(ctx)
+	case group.FieldCreditBilling:
+		return m.OldCreditBilling(ctx)
 	case group.FieldPeakRateEnabled:
 		return m.OldPeakRateEnabled(ctx)
 	case group.FieldPeakStart:
@@ -26656,19 +26604,12 @@ func (m *GroupMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetRateMultiplier(v)
 		return nil
-	case group.FieldBillingMode:
-		v, ok := value.(string)
+	case group.FieldCreditBilling:
+		v, ok := value.(domain.GroupCreditBilling)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
-		m.SetBillingMode(v)
-		return nil
-	case group.FieldCreditPrice:
-		v, ok := value.(float64)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetCreditPrice(v)
+		m.SetCreditBilling(v)
 		return nil
 	case group.FieldPeakRateEnabled:
 		v, ok := value.(bool)
@@ -27108,9 +27049,6 @@ func (m *GroupMutation) AddedFields() []string {
 	if m.addrate_multiplier != nil {
 		fields = append(fields, group.FieldRateMultiplier)
 	}
-	if m.addcredit_price != nil {
-		fields = append(fields, group.FieldCreditPrice)
-	}
 	if m.addpeak_rate_multiplier != nil {
 		fields = append(fields, group.FieldPeakRateMultiplier)
 	}
@@ -27199,8 +27137,6 @@ func (m *GroupMutation) AddedField(name string) (ent.Value, bool) {
 	switch name {
 	case group.FieldRateMultiplier:
 		return m.AddedRateMultiplier()
-	case group.FieldCreditPrice:
-		return m.AddedCreditPrice()
 	case group.FieldPeakRateMultiplier:
 		return m.AddedPeakRateMultiplier()
 	case group.FieldDailyLimitUsd:
@@ -27268,13 +27204,6 @@ func (m *GroupMutation) AddField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddRateMultiplier(v)
-		return nil
-	case group.FieldCreditPrice:
-		v, ok := value.(float64)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.AddCreditPrice(v)
 		return nil
 	case group.FieldPeakRateMultiplier:
 		v, ok := value.(float64)
@@ -27472,6 +27401,9 @@ func (m *GroupMutation) ClearedFields() []string {
 	if m.FieldCleared(group.FieldDescription) {
 		fields = append(fields, group.FieldDescription)
 	}
+	if m.FieldCleared(group.FieldCreditBilling) {
+		fields = append(fields, group.FieldCreditBilling)
+	}
 	if m.FieldCleared(group.FieldDuplicateOperationID) {
 		fields = append(fields, group.FieldDuplicateOperationID)
 	}
@@ -27551,6 +27483,9 @@ func (m *GroupMutation) ClearField(name string) error {
 		return nil
 	case group.FieldDescription:
 		m.ClearDescription()
+		return nil
+	case group.FieldCreditBilling:
+		m.ClearCreditBilling()
 		return nil
 	case group.FieldDuplicateOperationID:
 		m.ClearDuplicateOperationID()
@@ -27641,11 +27576,8 @@ func (m *GroupMutation) ResetField(name string) error {
 	case group.FieldRateMultiplier:
 		m.ResetRateMultiplier()
 		return nil
-	case group.FieldBillingMode:
-		m.ResetBillingMode()
-		return nil
-	case group.FieldCreditPrice:
-		m.ResetCreditPrice()
+	case group.FieldCreditBilling:
+		m.ResetCreditBilling()
 		return nil
 	case group.FieldPeakRateEnabled:
 		m.ResetPeakRateEnabled()

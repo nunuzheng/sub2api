@@ -1022,8 +1022,9 @@ func (s *GatewayService) calculateRecordUsageCost(
 ) *CostBreakdown {
 	// credit 分组按上游消耗 credit × 分组单价扣客户，不进入 token/图片价表，也不乘 rate_multiplier。
 	// token 分组（默认）走下面的原路径。
-	if apiKey != nil && result != nil {
-		if cost := creditBillingCost(apiKey.Group, result.Usage.Credits); cost != nil {
+	if apiKey != nil && apiKey.Group != nil && apiKey.Group.UsesCreditBilling() && result != nil {
+		price := effectiveCreditUnitPrice(ctx, s.userGroupRateRepo, apiKey.Group, apiKey.UserID)
+		if cost := creditBillingCost(apiKey.Group, price, result.Usage.Credits, result.Usage.CreditsSeen); cost != nil {
 			return cost
 		}
 	}

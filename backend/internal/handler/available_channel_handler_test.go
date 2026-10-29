@@ -42,6 +42,20 @@ func TestFilterUserVisibleGroups_IntersectionOnly(t *testing.T) {
 	require.ElementsMatch(t, []int64{1, 3}, ids)
 }
 
+func TestFilterUserVisibleGroups_CreditBillingIsPublic(t *testing.T) {
+	cost := 0.075
+	groups := []service.AvailableGroupRef{{
+		ID: 22, Name: "kiro", Platform: "anthropic",
+		CreditBilling: service.GroupCreditBilling{Enabled: true, UnitPrice: 0.144, CostPerCredit: &cost},
+	}}
+	visible := filterUserVisibleGroups(groups, map[int64]struct{}{22: {}})
+	require.Len(t, visible, 1)
+	require.NotNil(t, visible[0].CreditBilling)
+	require.True(t, visible[0].CreditBilling.Enabled)
+	require.InDelta(t, 0.144, visible[0].CreditBilling.UnitPrice, 1e-9)
+	require.Nil(t, visible[0].CreditBilling.CostPerCredit)
+}
+
 func TestToUserSupportedModels_FiltersByAllowedPlatforms(t *testing.T) {
 	// 用户可访问分组只覆盖 anthropic；anthropic 平台的模型保留，openai 模型被剔除。
 	src := []service.SupportedModel{

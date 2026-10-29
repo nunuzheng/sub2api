@@ -38,6 +38,7 @@
         :platforms="platforms"
         :groups="groupOptions"
         :rates="rates"
+        :show-credit="hasCreditGroups"
         :platform="selectedPlatform"
         :group-id="selectedGroupId"
         :rate="selectedRate"
@@ -87,7 +88,7 @@ const isAuthenticated = computed(() => authStore.isAuthenticated)
 
 const selectedPlatform = ref<string>('all')
 const selectedGroupId = ref<number | 'all'>('all')
-const selectedRate = ref<number | 'all'>('all')
+const selectedRate = ref<number | 'all' | 'credit'>('all')
 const searchQuery = ref('')
 
 const searchActive = computed(() => searchQuery.value.trim() !== '')
@@ -103,6 +104,10 @@ function effectiveRate(g: ModelPlazaGroup): number {
   return g.user_rate_multiplier ?? g.rate_multiplier
 }
 
+function isCreditGroup(g: ModelPlazaGroup): boolean {
+  return g.credit_billing?.enabled === true
+}
+
 const platforms = computed(() =>
   [...new Set((props.response?.groups ?? []).map((g) => g.platform).filter(Boolean))].sort()
 )
@@ -112,9 +117,12 @@ const groupOptions = computed(() =>
     id: g.id,
     name: g.name,
     platform: g.platform,
-    rate: effectiveRate(g)
+    rate: effectiveRate(g),
+    credit: isCreditGroup(g)
   }))
 )
+
+const hasCreditGroups = computed(() => (props.response?.groups ?? []).some(isCreditGroup))
 
 /** 全量生效倍率;当前组合下不可用的项由 FilterBar 置灰而非隐藏。 */
 const rates = computed(() =>
@@ -123,7 +131,7 @@ const rates = computed(() =>
 
 /** 数据刷新后选中的倍率可能不复存在,重置为全部。 */
 watch(rates, (list) => {
-  if (selectedRate.value !== 'all' && !list.includes(selectedRate.value)) {
+  if (selectedRate.value !== 'all' && selectedRate.value !== 'credit' && !list.includes(selectedRate.value)) {
     selectedRate.value = 'all'
   }
 })
@@ -136,8 +144,10 @@ const filteredGroups = computed(() => {
   if (selectedGroupId.value !== 'all') {
     groups = groups.filter((g) => g.id === selectedGroupId.value)
   }
-  if (selectedRate.value !== 'all') {
-    groups = groups.filter((g) => effectiveRate(g) === selectedRate.value)
+  if (selectedRate.value === 'credit') {
+    groups = groups.filter(isCreditGroup)
+  } else if (selectedRate.value !== 'all') {
+    groups = groups.filter((g) => !isCreditGroup(g) && effectiveRate(g) === selectedRate.value)
   }
   // 模型名搜索:分组内只留命中的模型,整组无命中则隐藏该分组。
   const q = searchQuery.value.trim().toLowerCase()

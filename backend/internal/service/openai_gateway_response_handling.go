@@ -1284,8 +1284,12 @@ func mergeOpenAIUsageNonZero(dst *OpenAIUsage, src OpenAIUsage) {
 	if src.CreditsExplicit {
 		dst.Credits = src.Credits
 		dst.CreditsExplicit = true
+		dst.CreditsSeen = true
 	} else if src.Credits > 0 && !dst.CreditsExplicit {
 		dst.Credits += src.Credits
+		dst.CreditsSeen = true
+	} else if src.CreditsSeen && !dst.CreditsExplicit {
+		dst.CreditsSeen = true
 	}
 }
 
@@ -1379,6 +1383,7 @@ func extractOpenAIUsageFromJSONBytes(body []byte) (OpenAIUsage, bool) {
 			if !usage.CreditsExplicit {
 				if sum := upstreamcredit.SumMetering(body); sum > 0 {
 					usage.Credits += sum
+					usage.CreditsSeen = true
 				}
 			}
 			return usage, true
@@ -1580,6 +1585,7 @@ func openAIUsageFromGJSON(value gjson.Result) (OpenAIUsage, bool) {
 	if snap, ok := upstreamcredit.ExplicitSnapshot([]byte(`{"usage":` + value.Raw + `}`)); ok {
 		usage.Credits = normalizeCreditQuantity(snap)
 		usage.CreditsExplicit = true
+		usage.CreditsSeen = true
 	}
 	return usage, true
 }

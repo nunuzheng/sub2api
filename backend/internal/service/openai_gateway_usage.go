@@ -591,13 +591,15 @@ func (s *OpenAIGatewayService) calculateOpenAIRecordUsageCost(
 	modelLongContextExempt bool,
 	pricingAt time.Time,
 ) (*CostBreakdown, error) {
-	if apiKey != nil {
+	if apiKey != nil && apiKey.Group != nil && apiKey.Group.UsesCreditBilling() {
 		credits := 0.0
+		seen := false
 		if result != nil {
 			credits = result.Usage.Credits
+			seen = result.Usage.CreditsSeen
 		}
-		// credit 分组不走下方 token / 图片 / 搜索价表，也不乘传入的倍率。
-		if cost := creditBillingCost(apiKey.Group, credits); cost != nil {
+		price := effectiveCreditUnitPrice(ctx, s.userGroupRateRepo, apiKey.Group, apiKey.UserID)
+		if cost := creditBillingCost(apiKey.Group, price, credits, seen); cost != nil {
 			return cost, nil
 		}
 	}

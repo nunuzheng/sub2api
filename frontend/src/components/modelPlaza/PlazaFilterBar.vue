@@ -66,6 +66,15 @@
           {{ t('modelPlaza.filters.all') }}
         </button>
         <button
+          v-if="showCredit"
+          type="button"
+          class="rounded-lg px-3 py-1.5 text-sm font-medium transition"
+          :class="chipClass(rate === 'credit')"
+          @click="$emit('update:rate', 'credit')"
+        >
+          {{ t('modelPlaza.filters.credit') }}
+        </button>
+        <button
           v-for="r in rates"
           :key="`rate-${r}`"
           type="button"
@@ -121,12 +130,13 @@ const props = defineProps<{
   /** 数据中出现的平台(去重排序后)。 */
   platforms: string[]
   /** 全量分组(含平台与生效倍率),三个维度的置灰联动由此推导。 */
-  groups: Array<{ id: number; name: string; platform: string; rate: number }>
+  groups: Array<{ id: number; name: string; platform: string; rate: number; credit?: boolean }>
   /** 全量生效倍率去重升序。 */
   rates: number[]
+  showCredit?: boolean
   platform: string
   groupId: number | 'all'
-  rate: number | 'all'
+  rate: number | 'all' | 'credit'
   /** 模型名搜索词(纯前端过滤)。 */
   search: string
 }>()
@@ -134,7 +144,7 @@ const props = defineProps<{
 defineEmits<{
   'update:platform': [value: string]
   'update:groupId': [value: number | 'all']
-  'update:rate': [value: number | 'all']
+  'update:rate': [value: number | 'all' | 'credit']
   'update:search': [value: string]
 }>()
 
@@ -149,21 +159,21 @@ function platformEnabled(p: string): boolean {
     (g) =>
       g.platform === p &&
       (props.groupId === 'all' || g.id === props.groupId) &&
-      (props.rate === 'all' || g.rate === props.rate)
+      (props.rate === 'all' || (props.rate === 'credit' ? g.credit : g.rate === props.rate))
   )
 }
 
-function groupEnabled(g: { platform: string; rate: number }): boolean {
+function groupEnabled(g: { platform: string; rate: number; credit?: boolean }): boolean {
   return (
     (props.platform === 'all' || g.platform === props.platform) &&
-    (props.rate === 'all' || g.rate === props.rate)
+    (props.rate === 'all' || (props.rate === 'credit' ? !!g.credit : !g.credit && g.rate === props.rate))
   )
 }
 
 function rateEnabled(r: number): boolean {
   return props.groups.some(
     (g) =>
-      g.rate === r &&
+      !g.credit && g.rate === r &&
       (props.platform === 'all' || g.platform === props.platform) &&
       (props.groupId === 'all' || g.id === props.groupId)
   )

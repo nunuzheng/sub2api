@@ -321,7 +321,9 @@ const billingModeOptions = ref<SelectOption[]>([
   { value: 'per_request', label: t('admin.usage.billingModePerRequest') },
   { value: 'image', label: t('admin.usage.billingModeImage') },
   { value: 'video', label: t('admin.usage.billingModeVideo') },
-  { value: 'credit', label: t('admin.usage.billingModeCredit') }
+  { value: 'kiro_credit', label: t('admin.usage.billingModeKiroCredit') },
+  { value: 'kiro_credit_missing', label: t('admin.usage.billingModeKiroCreditMissing') },
+  { value: 'kiro_credit_error', label: t('admin.usage.billingModeKiroCreditError') }
 ])
 
 const upstreamModelMismatchOptions = ref<SelectOption[]>([

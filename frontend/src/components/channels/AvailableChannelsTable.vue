@@ -100,11 +100,12 @@
                     :platform="g.platform as GroupPlatform"
                     :subscription-type="(g.subscription_type || 'standard') as SubscriptionType"
                     :rate-multiplier="g.rate_multiplier"
+                    :credit-unit-price="creditUnitPrice(g)"
                     :user-rate-multiplier="userGroupRates[g.id] ?? null"
                     always-show-rate
                   />
                   <span
-                    v-if="hasPeakRate(g)"
+                    v-if="hasPeakRate(g) && creditUnitPrice(g) == null"
                     class="inline-flex items-center gap-1 rounded-md bg-amber-50 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 dark:bg-amber-900/20 dark:text-amber-300"
                     :title="peakRateTitle(g)"
                   >
@@ -134,11 +135,12 @@
                     :platform="g.platform as GroupPlatform"
                     :subscription-type="(g.subscription_type || 'standard') as SubscriptionType"
                     :rate-multiplier="g.rate_multiplier"
+                    :credit-unit-price="creditUnitPrice(g)"
                     :user-rate-multiplier="userGroupRates[g.id] ?? null"
                     always-show-rate
                   />
                   <span
-                    v-if="hasPeakRate(g)"
+                    v-if="hasPeakRate(g) && creditUnitPrice(g) == null"
                     class="inline-flex items-center gap-1 rounded-md bg-amber-50 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 dark:bg-amber-900/20 dark:text-amber-300"
                     :title="peakRateTitle(g)"
                   >
@@ -239,11 +241,12 @@
                         :platform="g.platform as GroupPlatform"
                         :subscription-type="(g.subscription_type || 'standard') as SubscriptionType"
                         :rate-multiplier="g.rate_multiplier"
+                        :credit-unit-price="creditUnitPrice(g)"
                         :user-rate-multiplier="userGroupRates[g.id] ?? null"
                         always-show-rate
                       />
                       <span
-                        v-if="hasPeakRate(g)"
+                        v-if="hasPeakRate(g) && creditUnitPrice(g) == null"
                         class="inline-flex items-center gap-1 rounded-md bg-amber-50 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 dark:bg-amber-900/20 dark:text-amber-300"
                         :title="peakRateTitle(g)"
                       >
@@ -274,11 +277,12 @@
                         :platform="g.platform as GroupPlatform"
                         :subscription-type="(g.subscription_type || 'standard') as SubscriptionType"
                         :rate-multiplier="g.rate_multiplier"
+                        :credit-unit-price="creditUnitPrice(g)"
                         :user-rate-multiplier="userGroupRates[g.id] ?? null"
                         always-show-rate
                       />
                       <span
-                        v-if="hasPeakRate(g)"
+                        v-if="hasPeakRate(g) && creditUnitPrice(g) == null"
                         class="inline-flex items-center gap-1 rounded-md bg-amber-50 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 dark:bg-amber-900/20 dark:text-amber-300"
                         :title="peakRateTitle(g)"
                       >
@@ -367,6 +371,10 @@ const appStore = useAppStore()
 
 function hasPeakRate(group: UserAvailableGroup): boolean {
   return groupHasPeakRate(group)
+}
+
+function creditUnitPrice(group: UserAvailableGroup): number | null {
+  return group.credit_billing?.enabled ? group.credit_billing.unit_price : null
 }
 
 function peakRateLabel(group: UserAvailableGroup): string {

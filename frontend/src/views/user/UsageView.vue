@@ -405,7 +405,9 @@ const billingModeOptions = computed<SelectOption[]>(() => [
   { value: 'per_request', label: t('admin.usage.billingModePerRequest') },
   { value: 'image', label: t('admin.usage.billingModeImage') },
   { value: 'video', label: t('admin.usage.billingModeVideo') },
-  { value: 'credit', label: t('admin.usage.billingModeCredit') },
+  { value: 'kiro_credit', label: t('admin.usage.billingModeKiroCredit') },
+  { value: 'kiro_credit_missing', label: t('admin.usage.billingModeKiroCreditMissing') },
+  { value: 'kiro_credit_error', label: t('admin.usage.billingModeKiroCreditError') },
 ])
 
 const apiKeys = ref<ApiKey[]>([])
@@ -691,7 +693,7 @@ const exportToCSV = async () => {
       log.rate_multiplier,
       log.credits ?? '',
       log.credit_price ?? '',
-      log.billing_mode === 'credit' && log.credits != null && log.credit_price != null
+      log.billing_mode === 'kiro_credit' && log.credits != null && log.credit_price != null
         ? `${log.credits} credit × $${log.credit_price}/credit`
         : '',
       log.actual_cost.toFixed(8),

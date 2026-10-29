@@ -167,6 +167,8 @@ func GroupFromServiceAdmin(g *service.Group) *AdminGroup {
 		RateLimitedAccountCount:     g.RateLimitedAccountCount,
 		SortOrder:                   g.SortOrder,
 	}
+	full := g.CreditBilling
+	out.CreditBilling = &full
 	if len(g.AccountGroups) > 0 {
 		out.AccountGroups = make([]AccountGroup, 0, len(g.AccountGroups))
 		for i := range g.AccountGroups {
@@ -177,6 +179,14 @@ func GroupFromServiceAdmin(g *service.Group) *AdminGroup {
 	return out
 }
 
+func publicGroupCreditBilling(b service.GroupCreditBilling) *service.GroupCreditBilling {
+	if !b.Enabled {
+		return nil
+	}
+	pub := b.Public()
+	return &pub
+}
+
 func groupFromServiceBase(g *service.Group) Group {
 	return Group{
 		ID:                              g.ID,
@@ -185,8 +195,7 @@ func groupFromServiceBase(g *service.Group) Group {
 		I18n:                            g.I18n,
 		Platform:                        g.Platform,
 		RateMultiplier:                  g.RateMultiplier,
-		BillingMode:                     service.GroupBillingModeOrToken(g.BillingMode),
-		CreditPrice:                     g.CreditPrice,
+		CreditBilling:                   publicGroupCreditBilling(g.CreditBilling),
 		IsExclusive:                     g.IsExclusive,
 		Status:                          g.Status,
 		SubscriptionType:                g.SubscriptionType,

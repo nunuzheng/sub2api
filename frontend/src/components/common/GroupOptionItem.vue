@@ -26,7 +26,11 @@
     <div class="flex shrink-0 items-center gap-2 pt-0.5">
       <div class="flex shrink-0 flex-col items-end gap-1">
         <!-- Rate pill (platform color) -->
-        <span v-if="rateMultiplier !== undefined" :class="['inline-flex items-center whitespace-nowrap rounded-full px-3 py-1 text-xs font-semibold', ratePillClass]">
+        <span v-if="creditPriceLabel" :class="['inline-flex items-center gap-1 whitespace-nowrap rounded-full px-3 py-1 text-xs font-semibold', ratePillClass]">
+          <span>{{ t('groups.creditBadge') }}</span>
+          <span class="font-bold">{{ creditPriceLabel }}</span>
+        </span>
+        <span v-else-if="rateMultiplier !== undefined" :class="['inline-flex items-center whitespace-nowrap rounded-full px-3 py-1 text-xs font-semibold', ratePillClass]">
           <template v-if="hasCustomRate">
             <span class="mr-1 line-through opacity-50">{{ rateMultiplier }}x</span>
             <span class="font-bold">{{ userRateMultiplier }}x</span>
@@ -36,7 +40,7 @@
           </template>
         </span>
         <span
-          v-if="hasPeakRate"
+          v-if="hasPeakRate && !creditPriceLabel"
           class="inline-flex items-center whitespace-nowrap rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700 dark:bg-amber-900/20 dark:text-amber-300"
           :title="peakRateTitle"
         >
@@ -78,6 +82,7 @@ interface Props {
   peakStart?: string
   peakEnd?: string
   peakRateMultiplier?: number
+  creditUnitPrice?: number | null
   description?: string | null
   selected?: boolean
   showCheckmark?: boolean
@@ -102,6 +107,12 @@ const hasCustomRate = computed(() => {
 })
 
 const appStore = useAppStore()
+
+const creditPriceLabel = computed(() => {
+  if (props.creditUnitPrice == null || !Number.isFinite(props.creditUnitPrice)) return ''
+  const text = props.creditUnitPrice.toFixed(8).replace(/0+$/, '').replace(/\.$/, '')
+  return `$${text}/credit`
+})
 
 const hasPeakRate = computed(() => {
   return Boolean(props.peakRateEnabled && props.peakStart && props.peakEnd)

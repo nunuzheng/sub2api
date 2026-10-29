@@ -23,6 +23,9 @@ import (
 type State struct {
 	Credits  float64
 	Explicit bool
+	// Seen is true when this body (or an earlier one) carried a credit snapshot
+	// or a positive metering event. Absent credits stay Seen=false.
+	Seen bool
 }
 
 // Absorb merges credits found in body into the state.
@@ -35,6 +38,7 @@ func (s *State) Absorb(body []byte) {
 	if snap, ok := ExplicitSnapshot(body); ok {
 		s.Credits = normalizeQuantity(snap)
 		s.Explicit = true
+		s.Seen = true
 		return
 	}
 	if s.Explicit {
@@ -42,6 +46,7 @@ func (s *State) Absorb(body []byte) {
 	}
 	if sum := SumMetering(body); sum > 0 {
 		s.Credits += sum
+		s.Seen = true
 	}
 }
 

@@ -30,10 +30,8 @@ const (
 	FieldI18n = "i18n"
 	// FieldRateMultiplier holds the string denoting the rate_multiplier field in the database.
 	FieldRateMultiplier = "rate_multiplier"
-	// FieldBillingMode holds the string denoting the billing_mode field in the database.
-	FieldBillingMode = "billing_mode"
-	// FieldCreditPrice holds the string denoting the credit_price field in the database.
-	FieldCreditPrice = "credit_price"
+	// FieldCreditBilling holds the string denoting the credit_billing field in the database.
+	FieldCreditBilling = "credit_billing"
 	// FieldPeakRateEnabled holds the string denoting the peak_rate_enabled field in the database.
 	FieldPeakRateEnabled = "peak_rate_enabled"
 	// FieldPeakStart holds the string denoting the peak_start field in the database.
@@ -238,8 +236,7 @@ var Columns = []string{
 	FieldDescription,
 	FieldI18n,
 	FieldRateMultiplier,
-	FieldBillingMode,
-	FieldCreditPrice,
+	FieldCreditBilling,
 	FieldPeakRateEnabled,
 	FieldPeakStart,
 	FieldPeakEnd,
@@ -342,14 +339,8 @@ var (
 	DefaultI18n domain.GroupI18n
 	// DefaultRateMultiplier holds the default value on creation for the "rate_multiplier" field.
 	DefaultRateMultiplier float64
-	// DefaultBillingMode holds the default value on creation for the "billing_mode" field.
-	DefaultBillingMode string
-	// BillingModeValidator is a validator for the "billing_mode" field. It is called by the builders before save.
-	BillingModeValidator func(string) error
-	// DefaultCreditPrice holds the default value on creation for the "credit_price" field.
-	DefaultCreditPrice float64
-	// CreditPriceValidator is a validator for the "credit_price" field. It is called by the builders before save.
-	CreditPriceValidator func(float64) error
+	// DefaultCreditBilling holds the default value on creation for the "credit_billing" field.
+	DefaultCreditBilling domain.GroupCreditBilling
 	// DefaultPeakRateEnabled holds the default value on creation for the "peak_rate_enabled" field.
 	DefaultPeakRateEnabled bool
 	// DefaultPeakStart holds the default value on creation for the "peak_start" field.
@@ -496,16 +487,6 @@ func ByDescription(opts ...sql.OrderTermOption) OrderOption {
 // ByRateMultiplier orders the results by the rate_multiplier field.
 func ByRateMultiplier(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldRateMultiplier, opts...).ToFunc()
-}
-
-// ByBillingMode orders the results by the billing_mode field.
-func ByBillingMode(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldBillingMode, opts...).ToFunc()
-}
-
-// ByCreditPrice orders the results by the credit_price field.
-func ByCreditPrice(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldCreditPrice, opts...).ToFunc()
 }
 
 // ByPeakRateEnabled orders the results by the peak_rate_enabled field.

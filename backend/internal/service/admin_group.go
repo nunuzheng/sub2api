@@ -401,13 +401,9 @@ func (s *adminServiceImpl) CreateGroup(ctx context.Context, input *CreateGroupIn
 	if input.RateMultiplier <= 0 {
 		return nil, errors.New("rate_multiplier must be > 0")
 	}
-	billingMode, err := NormalizeGroupBillingMode(input.BillingMode)
+	creditBilling, err := applyGroupCreditBillingUpdate(GroupCreditBilling{}, input.CreditBilling)
 	if err != nil {
-		return nil, infraerrors.BadRequest("INVALID_BILLING_MODE", err.Error())
-	}
-	creditPrice, err := NormalizeGroupCreditPrice(input.CreditPrice)
-	if err != nil {
-		return nil, infraerrors.BadRequest("INVALID_CREDIT_PRICE", err.Error())
+		return nil, infraerrors.BadRequest("INVALID_CREDIT_BILLING", err.Error())
 	}
 	i18n, err := normalizeGroupI18n(input.I18n)
 	if err != nil {
@@ -589,8 +585,7 @@ func (s *adminServiceImpl) CreateGroup(ctx context.Context, input *CreateGroupIn
 		I18n:                            i18n,
 		Platform:                        platform,
 		RateMultiplier:                  input.RateMultiplier,
-		BillingMode:                     billingMode,
-		CreditPrice:                     creditPrice,
+		CreditBilling:                   creditBilling,
 		IsExclusive:                     input.IsExclusive,
 		Status:                          StatusActive,
 		SubscriptionType:                subscriptionType,
@@ -817,19 +812,12 @@ func (s *adminServiceImpl) UpdateGroup(ctx context.Context, id int64, input *Upd
 		}
 		group.RateMultiplier = *input.RateMultiplier
 	}
-	if input.BillingMode != nil {
-		billingMode, modeErr := NormalizeGroupBillingMode(*input.BillingMode)
-		if modeErr != nil {
-			return nil, infraerrors.BadRequest("INVALID_BILLING_MODE", modeErr.Error())
+	if input.CreditBilling != nil {
+		creditBilling, billingErr := applyGroupCreditBillingUpdate(group.CreditBilling, input.CreditBilling)
+		if billingErr != nil {
+			return nil, infraerrors.BadRequest("INVALID_CREDIT_BILLING", billingErr.Error())
 		}
-		group.BillingMode = billingMode
-	}
-	if input.CreditPrice != nil {
-		creditPrice, priceErr := NormalizeGroupCreditPrice(*input.CreditPrice)
-		if priceErr != nil {
-			return nil, infraerrors.BadRequest("INVALID_CREDIT_PRICE", priceErr.Error())
-		}
-		group.CreditPrice = creditPrice
+		group.CreditBilling = creditBilling
 	}
 	if input.IsExclusive != nil {
 		group.IsExclusive = *input.IsExclusive
@@ -1303,6 +1291,51 @@ func (s *adminServiceImpl) GetGroupRateMultipliers(ctx context.Context, groupID 
 		return nil, nil
 	}
 	return s.userGroupRateRepo.GetByGroupID(ctx, groupID)
+}
+
+func (s *adminServiceImpl) creditPriceStore() (UserGroupCreditPriceRepository, error) {
+	store, ok := s.userGroupRateRepo.(UserGroupCreditPriceRepository)
+	if !ok || store == nil {
+		return nil, fmt.Errorf("credit prices are not configured")
+	}
+	return store, nil
+}
+
+func (s *adminServiceImpl) GetGroupCreditPrices(ctx context.Context, groupID int64) ([]UserGroupCreditPriceEntry, error) {
+	if err := s.ValidateSimpleModeGroupOperation(AdminGroupOperationMultiplier); err != nil {
+		return nil, err
+	}
+	if _, err := s.groupRepo.GetByID(ctx, groupID); err != nil {
+		return nil, err
+	}
+	store, err := s.creditPriceStore()
+	if err != nil {
+		return nil, err
+	}
+	return store.ListCreditUnitPrices(ctx, groupID)
+}
+
+func (s *adminServiceImpl) ReplaceGroupCreditPrices(ctx context.Context, groupID int64, entries []GroupCreditPriceInput) error {
+	if err := s.ValidateSimpleModeGroupOperation(AdminGroupOperationMultiplier); err != nil {
+		return err
+	}
+	group, err := s.groupRepo.GetByID(ctx, groupID)
+	if err != nil {
+		return err
+	}
+	if !group.UsesCreditBilling() {
+		return infraerrors.BadRequest("CREDIT_BILLING_DISABLED", "credit billing is not enabled for this group")
+	}
+	for _, entry := range entries {
+		if entry.UserID <= 0 || !ValidCreditUnitPrice(entry.CreditUnitPrice) {
+			return infraerrors.BadRequest("INVALID_CREDIT_PRICE", "credit_unit_price must be between 1e-8 and 1000")
+		}
+	}
+	store, err := s.creditPriceStore()
+	if err != nil {
+		return err
+	}
+	return store.ReplaceCreditUnitPrices(ctx, groupID, entries)
 }
 
 func (s *adminServiceImpl) ClearGroupRateMultipliers(ctx context.Context, groupID int64) error {

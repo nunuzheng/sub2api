@@ -608,6 +608,7 @@ type ClaudeUsage struct {
 	// token 计费不读取该字段。
 	Credits         float64 `json:"-"`
 	creditsExplicit bool
+	CreditsSeen     bool `json:"-"`
 }
 
 // ForwardResult 转发结果
