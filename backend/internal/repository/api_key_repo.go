@@ -178,6 +178,10 @@ func (r *apiKeyRepository) GetByKeyForAuth(ctx context.Context, key string) (*se
 				group.FieldStatus,
 				group.FieldSubscriptionType,
 				group.FieldRateMultiplier,
+				// credit 计费：认证快照是 UsesCreditBilling 的直接来源。
+				// 漏选 credit_billing 会让已启用分组仍按 token 价表扣费，
+				// 且零值会被认证缓存固化。
+				group.FieldCreditBilling,
 				group.FieldDailyLimitUsd,
 				group.FieldWeeklyLimitUsd,
 				group.FieldMonthlyLimitUsd,
