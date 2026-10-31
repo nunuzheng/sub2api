@@ -238,7 +238,7 @@ import Icon from '@/components/icons/Icon.vue'
 import UserErrorRequestsTable from '@/components/user/UserErrorRequestsTable.vue'
 import { getPersistedPageSize } from '@/composables/usePersistedPageSize'
 import { formatReasoningEffort } from '@/utils/format'
-import { getBillingModeLabel, getDisplayBillingMode as resolveDisplayBillingMode } from '@/utils/billingMode'
+import { getBillingModeLabel, getDisplayBillingMode as resolveDisplayBillingMode, isKiroCreditMode } from '@/utils/billingMode'
 import { resolveUsageRequestType, requestTypeToLegacyStream } from '@/utils/usageRequestType'
 import type {
   ApiKey,
@@ -690,14 +690,14 @@ const exportToCSV = async () => {
       log.output_tokens,
       log.cache_read_tokens,
       log.cache_creation_tokens,
-      log.rate_multiplier,
+      isKiroCreditMode(log.billing_mode) ? '' : log.rate_multiplier,
       log.credits ?? '',
-      log.credit_price ?? '',
+      isKiroCreditMode(log.billing_mode) ? (log.credit_price ?? '') : '',
       log.billing_mode === 'kiro_credit' && log.credits != null && log.credit_price != null
         ? `${log.credits} credit × $${log.credit_price}/credit`
         : '',
       log.actual_cost.toFixed(8),
-      log.total_cost.toFixed(8),
+      isKiroCreditMode(log.billing_mode) ? '' : log.total_cost.toFixed(8),
       log.first_token_ms ?? '',
       log.duration_ms ?? '',
     ].map(escapeCSVValue))

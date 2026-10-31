@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"encoding/json"
 	"log/slog"
 
 	"github.com/Wei-Shaw/sub2api/internal/pkg/response"
@@ -99,6 +100,57 @@ type modelPlazaGroup struct {
 	CreditBilling             *service.GroupCreditBilling `json:"credit_billing,omitempty"`
 	UserCreditUnitPrice       *float64                    `json:"user_credit_unit_price,omitempty"`
 	Models                    []modelPlazaModel           `json:"models"`
+}
+
+func (g modelPlazaGroup) MarshalJSON() ([]byte, error) {
+	type alias modelPlazaGroup
+	payload := alias(g)
+	credit := payload.CreditBilling != nil && payload.CreditBilling.Enabled
+	if payload.CreditBilling != nil {
+		pub := payload.CreditBilling.Public()
+		payload.CreditBilling = &pub
+	}
+	if credit {
+		for i := range payload.Models {
+			payload.Models[i].Pricing = nil
+			payload.Models[i].OfficialPricing = nil
+			payload.Models[i].TimePricing = nil
+			payload.Models[i].LongContextBasis = ""
+		}
+	}
+	raw, err := json.Marshal(payload)
+	if err != nil || !credit {
+		return raw, err
+	}
+	var obj map[string]any
+	if err := json.Unmarshal(raw, &obj); err != nil {
+		return nil, err
+	}
+	for _, key := range []string{
+		"rate_multiplier", "user_rate_multiplier",
+		"peak_rate_enabled", "peak_start", "peak_end", "peak_rate_multiplier",
+		"image_rate_independent", "image_rate_multiplier",
+		"video_rate_independent", "video_rate_multiplier",
+		"long_context_pricing_enabled",
+	} {
+		delete(obj, key)
+	}
+	if cb, ok := obj["credit_billing"].(map[string]any); ok {
+		delete(cb, "cost_per_credit")
+	}
+	if models, ok := obj["models"].([]any); ok {
+		for _, item := range models {
+			model, ok := item.(map[string]any)
+			if !ok {
+				continue
+			}
+			delete(model, "pricing")
+			delete(model, "official_pricing")
+			delete(model, "time_pricing")
+			delete(model, "long_context_basis")
+		}
+	}
+	return json.Marshal(obj)
 }
 
 // modelPlazaResponse 广场页响应。

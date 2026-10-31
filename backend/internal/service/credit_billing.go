@@ -3,11 +3,11 @@ package service
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"math"
 	"time"
 
 	"github.com/Wei-Shaw/sub2api/internal/domain"
-	"github.com/Wei-Shaw/sub2api/internal/pkg/logger"
 	"github.com/Wei-Shaw/sub2api/internal/pkg/upstreamcredit"
 )
 
@@ -96,14 +96,15 @@ func creditBillingCost(group *Group, unitPrice, credits float64, seen bool) *Cos
 	}
 	credits = normalizeCreditQuantity(credits)
 	if !seen {
-		logger.LegacyPrintf("service.billing", "[Billing] credit group=%d has no upstream credits; billing_mode=%s actual_cost=0", group.ID, BillingModeKiroCreditMissing)
+		// Missing credits bill 0. Callers must not continue into token pricing.
+		slog.Warn("credit_billing_not_charged", "billing_mode", BillingModeKiroCreditMissing, "group_id", group.ID, "actual_cost", 0)
 		return &CostBreakdown{
 			BillingMode: BillingModeKiroCreditMissing,
 			CreditPrice: unitPrice,
 		}
 	}
 	if !ValidCreditUnitPrice(unitPrice) {
-		logger.LegacyPrintf("service.billing", "[Billing] credit group=%d unit price %v is outside 1e-8..1000; billing_mode=%s actual_cost=0", group.ID, unitPrice, BillingModeKiroCreditError)
+		slog.Warn("credit_billing_not_charged", "billing_mode", BillingModeKiroCreditError, "group_id", group.ID, "unit_price", unitPrice, "actual_cost", 0)
 		return &CostBreakdown{
 			BillingMode: BillingModeKiroCreditError,
 			Credits:     credits,
@@ -120,13 +121,34 @@ func creditBillingCost(group *Group, unitPrice, credits float64, seen bool) *Cos
 	}
 }
 
-func isKiroCreditBillingMode(mode string) bool {
+// IsKiroCreditUsageMode reports usage-log billing modes for credit groups.
+func IsKiroCreditUsageMode(mode string) bool {
 	switch mode {
 	case BillingModeKiroCredit, BillingModeKiroCreditMissing, BillingModeKiroCreditError:
 		return true
 	default:
 		return false
 	}
+}
+
+func isKiroCreditBillingMode(mode string) bool {
+	return IsKiroCreditUsageMode(mode)
+}
+
+// customerChargeOrToken bills a credit group from credits × unit price.
+// When credit billing is enabled the token callback is not called, including
+// when upstream credits are missing or the unit price is unusable.
+func customerChargeOrToken(group *Group, unitPrice, credits float64, seen bool, token func() *CostBreakdown) *CostBreakdown {
+	if group.UsesCreditBilling() {
+		if cost := creditBillingCost(group, unitPrice, credits, seen); cost != nil {
+			return cost
+		}
+		return &CostBreakdown{BillingMode: BillingModeKiroCreditMissing, CreditPrice: unitPrice}
+	}
+	if token == nil {
+		return nil
+	}
+	return token()
 }
 
 // applyCreditBillingSnapshot records the credit charge. Token logs are unchanged.

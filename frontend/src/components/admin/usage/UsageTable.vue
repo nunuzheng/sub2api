@@ -227,13 +227,16 @@
               </div>
             </div>
             <div
-              v-if="row.billing_mode === 'kiro_credit' && row.credits != null && row.credit_price != null"
+              v-if="isKiroCreditMode(row.billing_mode)"
               data-testid="credit-charge"
               class="mt-0.5 text-[11px] text-gray-500 dark:text-gray-400"
             >
-              {{ formatCreditCharge(row.credits, row.credit_price) }}
+              <template v-if="row.billing_mode === 'kiro_credit' && row.credits != null && row.credit_price != null">
+                {{ formatCreditCharge(row.credits, row.credit_price) }}
+              </template>
+              <template v-else>{{ getBillingModeLabel(row.billing_mode, t) }}</template>
             </div>
-            <div v-if="showAccountBilling && row.account_rate_multiplier != null" class="mt-0.5 text-[11px] text-orange-500 dark:text-orange-400">
+            <div v-if="showAccountBilling && !isKiroCreditMode(row.billing_mode) && row.account_rate_multiplier != null" class="mt-0.5 text-[11px] text-orange-500 dark:text-orange-400">
               A ${{ accountBilled(row).toFixed(6) }}
             </div>
           </div>
@@ -415,6 +418,18 @@
     >
       <div class="whitespace-nowrap rounded-lg border border-gray-700 bg-gray-900 px-3 py-2.5 text-xs text-white shadow-xl dark:border-gray-600 dark:bg-gray-800">
         <div class="space-y-1.5">
+          <div v-if="isKiroCreditMode(tooltipData?.billing_mode)" class="space-y-1.5">
+            <div class="text-xs font-semibold text-gray-300">{{ t('usage.costDetails') }}</div>
+            <div v-if="tooltipData?.billing_mode === 'kiro_credit' && tooltipData.credits != null && tooltipData.credit_price != null" class="font-medium text-white">
+              {{ formatCreditCharge(tooltipData.credits, tooltipData.credit_price) }}
+            </div>
+            <div v-else class="font-medium text-amber-300">{{ getBillingModeLabel(tooltipData?.billing_mode, t) }}</div>
+            <div class="flex items-center justify-between gap-6">
+              <span class="text-gray-400">{{ t('usage.userBilled') }}</span>
+              <span class="font-semibold text-green-400">${{ tooltipData?.actual_cost?.toFixed(8) || '0.00000000' }}</span>
+            </div>
+          </div>
+          <template v-else>
           <!-- Cost Breakdown -->
           <div class="mb-2 border-b border-gray-700 pb-1.5">
             <div class="text-xs font-semibold text-gray-300 mb-1">{{ t('usage.costDetails') }}</div>
@@ -534,6 +549,7 @@
               </span>
             </div>
           </template>
+          </template>
         </div>
         <div class="absolute right-full top-1/2 h-0 w-0 -translate-y-1/2 border-b-[6px] border-r-[6px] border-t-[6px] border-b-transparent border-r-gray-900 border-t-transparent dark:border-r-gray-800"></div>
       </div>
@@ -566,6 +582,7 @@ import {
   isImageUsage,
   formatCreditCharge,
   getDisplayBillingMode,
+  isKiroCreditMode,
   imageUnitPrice,
 } from '@/utils/billingMode'
 import {

@@ -599,9 +599,7 @@ func (s *OpenAIGatewayService) calculateOpenAIRecordUsageCost(
 			seen = result.Usage.CreditsSeen
 		}
 		price := effectiveCreditUnitPrice(ctx, s.userGroupRateRepo, apiKey.Group, apiKey.UserID)
-		if cost := creditBillingCost(apiKey.Group, price, credits, seen); cost != nil {
-			return cost, nil
-		}
+		return customerChargeOrToken(apiKey.Group, price, credits, seen, nil), nil
 	}
 	billingModel := firstUsageBillingModel(billingModels)
 	if result != nil && result.WebSearchCalls > 0 {

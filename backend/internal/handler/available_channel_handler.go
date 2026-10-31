@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"encoding/json"
 	"sort"
 
 	"github.com/Wei-Shaw/sub2api/internal/pkg/response"
@@ -66,6 +67,34 @@ type userAvailableGroup struct {
 
 	// 不对外输出；List 按请求语言把 Name 换成译文后丢弃。
 	i18n service.GroupI18n
+}
+
+func (g userAvailableGroup) MarshalJSON() ([]byte, error) {
+	type alias userAvailableGroup
+	payload := alias(g)
+	credit := payload.CreditBilling != nil && payload.CreditBilling.Enabled
+	if payload.CreditBilling != nil {
+		pub := payload.CreditBilling.Public()
+		payload.CreditBilling = &pub
+	}
+	raw, err := json.Marshal(payload)
+	if err != nil || !credit {
+		return raw, err
+	}
+	var obj map[string]any
+	if err := json.Unmarshal(raw, &obj); err != nil {
+		return nil, err
+	}
+	for _, key := range []string{
+		"rate_multiplier",
+		"peak_rate_enabled", "peak_start", "peak_end", "peak_rate_multiplier",
+	} {
+		delete(obj, key)
+	}
+	if cb, ok := obj["credit_billing"].(map[string]any); ok {
+		delete(cb, "cost_per_credit")
+	}
+	return json.Marshal(obj)
 }
 
 // userSupportedModelPricing 用户可见的定价字段白名单。

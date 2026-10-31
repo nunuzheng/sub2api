@@ -161,10 +161,16 @@ func TestToModelPlazaGroupDTO_CreditBilling(t *testing.T) {
 	started := time.Date(2026, 10, 11, 18, 26, 36, 0, time.UTC)
 	cost := 0.075
 	g := service.PlazaGroup{
-		ID: 22, Name: "kiro", Platform: "anthropic", SubscriptionType: "standard", RateMultiplier: 0.9,
+		ID: 22, Name: "kiro", Platform: "anthropic", SubscriptionType: "standard", RateMultiplier: 1.6,
+		PeakRateEnabled: true, PeakRateMultiplier: 2,
 		CreditBilling: service.GroupCreditBilling{
 			Enabled: true, UnitPrice: 0.144, StartedAt: &started, CostPerCredit: &cost,
 		},
+		Models: []service.PlazaModel{{
+			Name: "claude-opus", Platform: "anthropic",
+			Pricing:         &service.ChannelModelPricing{BillingMode: service.BillingModeToken, InputPrice: testPtr(3e-6)},
+			OfficialPricing: &service.PlazaOfficialPricing{InputPrice: testPtr(3e-6)},
+		}},
 	}
 	dto := toModelPlazaGroupDTO(&g, nil, map[int64]float64{22: 0.2})
 	raw, err := json.Marshal(dto)
@@ -178,6 +184,19 @@ func TestToModelPlazaGroupDTO_CreditBilling(t *testing.T) {
 	_, hasCost := cb["cost_per_credit"]
 	require.False(t, hasCost, "customer plaza must not expose cost_per_credit")
 	require.InDelta(t, 0.2, decoded["user_credit_unit_price"].(float64), 1e-9)
+	_, hasRate := decoded["rate_multiplier"]
+	require.False(t, hasRate, "credit plaza group must not expose rate_multiplier")
+	_, hasUserRate := decoded["user_rate_multiplier"]
+	require.False(t, hasUserRate)
+	models := decoded["models"].([]any)
+	require.Len(t, models, 1)
+	model := models[0].(map[string]any)
+	_, hasPricing := model["pricing"]
+	_, hasOfficial := model["official_pricing"]
+	require.False(t, hasPricing)
+	require.False(t, hasOfficial)
+	require.NotContains(t, string(raw), "cost_per_credit")
+	require.NotContains(t, string(raw), "1.6")
 
 	token := toModelPlazaGroupDTO(&service.PlazaGroup{ID: 1, RateMultiplier: 1}, nil, nil)
 	rawToken, err := json.Marshal(token)

@@ -68,18 +68,56 @@ func TestCreditBillingCost_MissingAndErrorModes(t *testing.T) {
 }
 
 func TestApplyCreditBillingSnapshot_StableWhenPriceLaterChanges(t *testing.T) {
-	cost := creditBillingCost(&Group{CreditBilling: GroupCreditBilling{Enabled: true, UnitPrice: 0.144}}, 0.144, 0.544, true)
-	log := &UsageLog{RateMultiplier: 3, InputCost: 1}
+	group := &Group{CreditBilling: GroupCreditBilling{Enabled: true, UnitPrice: 0.144}}
+	cost := creditBillingCost(group, group.CreditBilling.UnitPrice, 0.544, true)
+	log := &UsageLog{RateMultiplier: 3, InputCost: 1, TotalCost: 9}
 	applyCreditBillingSnapshot(log, cost)
-	if log.RateMultiplier != 1 || log.ActualCost != cost.ActualCost {
+	if log.RateMultiplier != 1 || log.ActualCost != cost.ActualCost || log.InputCost != 0 {
 		t.Fatalf("log=%+v", log)
 	}
-	if log.CreditPrice == nil || *log.CreditPrice != 0.144 || log.Credits == nil {
+	if log.CreditPrice == nil || *log.CreditPrice != 0.144 || log.Credits == nil || *log.Credits != 0.544 {
 		t.Fatalf("snapshot credits=%v price=%v", log.Credits, log.CreditPrice)
 	}
-	// A later group price does not rewrite the stored snapshot.
-	if *log.CreditPrice == 0.2 {
-		t.Fatal("snapshot followed a later price")
+	group.CreditBilling.UnitPrice = 0.2
+	if *log.CreditPrice != 0.144 || log.ActualCost != cost.ActualCost {
+		t.Fatal("historical snapshot followed a later unit price")
+	}
+}
+
+func TestCustomerChargeOrToken_MissingCreditsDoNotUseTokenPrice(t *testing.T) {
+	group := &Group{ID: 9, RateMultiplier: 1.6, CreditBilling: GroupCreditBilling{Enabled: true, UnitPrice: 0.144}}
+	called := false
+	cost := customerChargeOrToken(group, 0.144, 0, false, func() *CostBreakdown {
+		called = true
+		return &CostBreakdown{BillingMode: string(BillingModeToken), ActualCost: 99, TotalCost: 50}
+	})
+	if called {
+		t.Fatal("token pricing ran for a credit group")
+	}
+	if cost == nil || cost.BillingMode != BillingModeKiroCreditMissing || cost.ActualCost != 0 || cost.TotalCost != 0 {
+		t.Fatalf("cost=%+v", cost)
+	}
+}
+
+func TestCustomerChargeOrToken_BadPriceDoesNotUseTokenPrice(t *testing.T) {
+	group := &Group{ID: 9, CreditBilling: GroupCreditBilling{Enabled: true, UnitPrice: 0}}
+	called := false
+	cost := customerChargeOrToken(group, 0, 1, true, func() *CostBreakdown {
+		called = true
+		return &CostBreakdown{BillingMode: string(BillingModeToken), ActualCost: 99}
+	})
+	if called || cost.BillingMode != BillingModeKiroCreditError || cost.ActualCost != 0 {
+		t.Fatalf("called=%v cost=%+v", called, cost)
+	}
+}
+
+func TestCustomerChargeOrToken_TokenGroupUnchanged(t *testing.T) {
+	group := &Group{RateMultiplier: 1.6, CreditBilling: GroupCreditBilling{UnitPrice: 0.144}}
+	cost := customerChargeOrToken(group, 0.144, 1, true, func() *CostBreakdown {
+		return &CostBreakdown{BillingMode: string(BillingModeToken), ActualCost: 1.25, TotalCost: 1.25}
+	})
+	if cost.BillingMode != string(BillingModeToken) || cost.ActualCost != 1.25 {
+		t.Fatalf("cost=%+v", cost)
 	}
 }
 

@@ -130,6 +130,7 @@ func GroupFromServiceShallow(g *service.Group) *Group {
 		return nil
 	}
 	out := groupFromServiceBase(g)
+	sanitizeCustomerCreditGroup(&out)
 	return &out
 }
 
@@ -702,7 +703,7 @@ func usageLogFromServiceUser(l *service.UsageLog) UsageLog {
 	if requestedModel == "" {
 		requestedModel = l.Model
 	}
-	return UsageLog{
+	out := UsageLog{
 		ID:                        l.ID,
 		UserID:                    l.UserID,
 		APIKeyID:                  l.APIKeyID,
@@ -759,6 +760,21 @@ func usageLogFromServiceUser(l *service.UsageLog) UsageLog {
 		Group:                     GroupFromServiceShallow(l.Group),
 		Subscription:              UserSubscriptionFromService(l.Subscription),
 	}
+	// Credit rows expose the sell amount only. Component costs stay on the
+	// stored log for operators, but customer and admin usage DTOs of a credit
+	// charge do not replay a token price table.
+	if out.BillingMode != nil && isCustomerCreditUsageMode(*out.BillingMode) {
+		out.InputCost = 0
+		out.OutputCost = 0
+		out.CacheCreationCost = 0
+		out.CacheReadCost = 0
+		out.ImageInputCost = 0
+		out.ImageOutputCost = 0
+		out.LongContextBillingApplied = false
+		out.RateMultiplier = 0
+		out.TotalCost = out.ActualCost
+	}
+	return out
 }
 
 // UsageLogFromService converts a service UsageLog to DTO for regular users.

@@ -51,37 +51,40 @@ func (h *PaymentHandler) GetPlans(c *gin.Context) {
 	}
 	// Enrich plans with group platform for frontend color coding
 	type planWithPlatform struct {
-		ID                 int64    `json:"id"`
-		GroupID            int64    `json:"group_id"`
-		GroupPlatform      string   `json:"group_platform"`
-		GroupName          string   `json:"group_name"`
-		RateMultiplier     float64  `json:"rate_multiplier"`
-		PeakRateEnabled    bool     `json:"peak_rate_enabled"`
-		PeakStart          string   `json:"peak_start"`
-		PeakEnd            string   `json:"peak_end"`
-		PeakRateMultiplier float64  `json:"peak_rate_multiplier"`
-		Name               string   `json:"name"`
-		Description        string   `json:"description"`
-		Price              float64  `json:"price"`
-		OriginalPrice      *float64 `json:"original_price,omitempty"`
-		Currency           string   `json:"currency,omitempty"`
-		ValidityDays       int      `json:"validity_days"`
-		ValidityUnit       string   `json:"validity_unit"`
-		Features           string   `json:"features"`
-		ProductName        string   `json:"product_name"`
-		ForSale            bool     `json:"for_sale"`
-		SortOrder          int      `json:"sort_order"`
+		ID                 int64                       `json:"id"`
+		GroupID            int64                       `json:"group_id"`
+		GroupPlatform      string                      `json:"group_platform"`
+		GroupName          string                      `json:"group_name"`
+		RateMultiplier     *float64                    `json:"rate_multiplier,omitempty"`
+		PeakRateEnabled    bool                        `json:"peak_rate_enabled"`
+		PeakStart          string                      `json:"peak_start"`
+		PeakEnd            string                      `json:"peak_end"`
+		PeakRateMultiplier *float64                    `json:"peak_rate_multiplier,omitempty"`
+		CreditBilling      *service.GroupCreditBilling `json:"credit_billing,omitempty"`
+		Name               string                      `json:"name"`
+		Description        string                      `json:"description"`
+		Price              float64                     `json:"price"`
+		OriginalPrice      *float64                    `json:"original_price,omitempty"`
+		Currency           string                      `json:"currency,omitempty"`
+		ValidityDays       int                         `json:"validity_days"`
+		ValidityUnit       string                      `json:"validity_unit"`
+		Features           string                      `json:"features"`
+		ProductName        string                      `json:"product_name"`
+		ForSale            bool                        `json:"for_sale"`
+		SortOrder          int                         `json:"sort_order"`
 	}
 	groupInfo := h.configService.GetGroupInfoMap(c.Request.Context(), plans)
 	result := make([]planWithPlatform, 0, len(plans))
 	for _, p := range plans {
 		gi := groupInfo[p.GroupID]
+		rate, peakOn, peakStart, peakEnd, peakRate, credit := customerPlanCreditFields(gi)
 		result = append(result, planWithPlatform{
 			ID: int64(p.ID), GroupID: p.GroupID,
 			GroupPlatform: gi.Platform, GroupName: gi.I18n.LocalizeName(c.GetHeader("Accept-Language"), gi.Name),
-			RateMultiplier: gi.RateMultiplier, PeakRateEnabled: gi.PeakRateEnabled,
-			PeakStart: gi.PeakStart, PeakEnd: gi.PeakEnd, PeakRateMultiplier: gi.PeakRateMultiplier,
-			Name: p.Name, Description: p.Description, Price: p.Price, OriginalPrice: p.OriginalPrice,
+			RateMultiplier: rate, PeakRateEnabled: peakOn,
+			PeakStart: peakStart, PeakEnd: peakEnd, PeakRateMultiplier: peakRate,
+			CreditBilling: credit,
+			Name:          p.Name, Description: p.Description, Price: p.Price, OriginalPrice: p.OriginalPrice,
 			Currency:     p.Currency,
 			ValidityDays: p.ValidityDays, ValidityUnit: p.ValidityUnit, Features: p.Features,
 			ProductName: p.ProductName, ForSale: p.ForSale, SortOrder: p.SortOrder,
@@ -124,12 +127,14 @@ func (h *PaymentHandler) GetCheckoutInfo(c *gin.Context) {
 	planList := make([]checkoutPlan, 0, len(plans))
 	for _, p := range plans {
 		gi := groupInfo[p.GroupID]
+		rate, peakOn, peakStart, peakEnd, peakRate, credit := customerPlanCreditFields(gi)
 		planList = append(planList, checkoutPlan{
 			ID: int64(p.ID), GroupID: p.GroupID,
 			GroupPlatform: gi.Platform, GroupName: gi.I18n.LocalizeName(c.GetHeader("Accept-Language"), gi.Name),
-			RateMultiplier:  gi.RateMultiplier,
-			PeakRateEnabled: gi.PeakRateEnabled, PeakStart: gi.PeakStart,
-			PeakEnd: gi.PeakEnd, PeakRateMultiplier: gi.PeakRateMultiplier,
+			RateMultiplier:  rate,
+			PeakRateEnabled: peakOn, PeakStart: peakStart,
+			PeakEnd: peakEnd, PeakRateMultiplier: peakRate,
+			CreditBilling:  credit,
 			DailyLimitUSD:  gi.DailyLimitUSD,
 			WeeklyLimitUSD: gi.WeeklyLimitUSD, MonthlyLimitUSD: gi.MonthlyLimitUSD,
 			ModelScopes: gi.ModelScopes,
@@ -180,28 +185,41 @@ type checkoutInfoResponse struct {
 }
 
 type checkoutPlan struct {
-	ID                 int64    `json:"id"`
-	GroupID            int64    `json:"group_id"`
-	GroupPlatform      string   `json:"group_platform"`
-	GroupName          string   `json:"group_name"`
-	RateMultiplier     float64  `json:"rate_multiplier"`
-	PeakRateEnabled    bool     `json:"peak_rate_enabled"`
-	PeakStart          string   `json:"peak_start"`
-	PeakEnd            string   `json:"peak_end"`
-	PeakRateMultiplier float64  `json:"peak_rate_multiplier"`
-	DailyLimitUSD      *float64 `json:"daily_limit_usd"`
-	WeeklyLimitUSD     *float64 `json:"weekly_limit_usd"`
-	MonthlyLimitUSD    *float64 `json:"monthly_limit_usd"`
-	ModelScopes        []string `json:"supported_model_scopes"`
-	Name               string   `json:"name"`
-	Description        string   `json:"description"`
-	Price              float64  `json:"price"`
-	OriginalPrice      *float64 `json:"original_price,omitempty"`
-	Currency           string   `json:"currency,omitempty"`
-	ValidityDays       int      `json:"validity_days"`
-	ValidityUnit       string   `json:"validity_unit"`
-	Features           []string `json:"features"`
-	ProductName        string   `json:"product_name"`
+	ID                 int64                       `json:"id"`
+	GroupID            int64                       `json:"group_id"`
+	GroupPlatform      string                      `json:"group_platform"`
+	GroupName          string                      `json:"group_name"`
+	RateMultiplier     *float64                    `json:"rate_multiplier,omitempty"`
+	PeakRateEnabled    bool                        `json:"peak_rate_enabled"`
+	PeakRateMultiplier *float64                    `json:"peak_rate_multiplier,omitempty"`
+	CreditBilling      *service.GroupCreditBilling `json:"credit_billing,omitempty"`
+	PeakStart          string                      `json:"peak_start"`
+	PeakEnd            string                      `json:"peak_end"`
+	DailyLimitUSD      *float64                    `json:"daily_limit_usd"`
+	WeeklyLimitUSD     *float64                    `json:"weekly_limit_usd"`
+	MonthlyLimitUSD    *float64                    `json:"monthly_limit_usd"`
+	ModelScopes        []string                    `json:"supported_model_scopes"`
+	Name               string                      `json:"name"`
+	Description        string                      `json:"description"`
+	Price              float64                     `json:"price"`
+	OriginalPrice      *float64                    `json:"original_price,omitempty"`
+	Currency           string                      `json:"currency,omitempty"`
+	ValidityDays       int                         `json:"validity_days"`
+	ValidityUnit       string                      `json:"validity_unit"`
+	Features           []string                    `json:"features"`
+	ProductName        string                      `json:"product_name"`
+}
+
+// customerPlanCreditFields hides rate multipliers when the group bills by credit.
+// The sell unit price is credit_billing.unit_price. cost_per_credit is omitted.
+func customerPlanCreditFields(gi service.PlanGroupInfo) (rate *float64, peakOn bool, peakStart, peakEnd string, peakRate *float64, credit *service.GroupCreditBilling) {
+	if gi.CreditBilling.Enabled {
+		pub := gi.CreditBilling.Public()
+		return nil, false, "", "", nil, &pub
+	}
+	r := gi.RateMultiplier
+	pr := gi.PeakRateMultiplier
+	return &r, gi.PeakRateEnabled, gi.PeakStart, gi.PeakEnd, &pr, nil
 }
 
 // parseFeatures splits a newline-separated features string into a string slice.

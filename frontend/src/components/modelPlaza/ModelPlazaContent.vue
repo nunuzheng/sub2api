@@ -126,7 +126,7 @@ const hasCreditGroups = computed(() => (props.response?.groups ?? []).some(isCre
 
 /** 全量生效倍率;当前组合下不可用的项由 FilterBar 置灰而非隐藏。 */
 const rates = computed(() =>
-  [...new Set((props.response?.groups ?? []).map(effectiveRate))].sort((a, b) => a - b)
+  [...new Set((props.response?.groups ?? []).filter((g) => !isCreditGroup(g)).map(effectiveRate))].sort((a, b) => a - b)
 )
 
 /** 数据刷新后选中的倍率可能不复存在,重置为全部。 */

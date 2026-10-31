@@ -54,6 +54,11 @@ func TestFilterUserVisibleGroups_CreditBillingIsPublic(t *testing.T) {
 	require.True(t, visible[0].CreditBilling.Enabled)
 	require.InDelta(t, 0.144, visible[0].CreditBilling.UnitPrice, 1e-9)
 	require.Nil(t, visible[0].CreditBilling.CostPerCredit)
+	raw, err := json.Marshal(visible[0])
+	require.NoError(t, err)
+	require.NotContains(t, string(raw), "cost_per_credit")
+	require.NotContains(t, string(raw), "rate_multiplier")
+	require.Contains(t, string(raw), `"unit_price":0.144`)
 }
 
 func TestToUserSupportedModels_FiltersByAllowedPlatforms(t *testing.T) {
