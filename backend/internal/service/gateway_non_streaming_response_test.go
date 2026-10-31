@@ -97,6 +97,56 @@ func TestHandleNonStreamingResponse_ValidJSONUnchanged(t *testing.T) {
 	require.JSONEq(t, string(body), rec.Body.String())
 }
 
+func TestHandleNonStreamingResponse_ProviderUsageCreditsBillsKiroCredit(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	rec := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(rec)
+	c.Request = httptest.NewRequest(http.MethodPost, "/v1/messages", nil)
+
+	const credits = 0.004377138706467661
+	body := []byte(`{"id":"msg_smoke","type":"message","role":"assistant","model":"claude-haiku-4-5","content":[{"type":"text","text":"hi"}],"usage":{"input_tokens":10,"output_tokens":78},"provider_usage":{"provider":"kiro","credits":0.004377138706467661}}`)
+	resp := &http.Response{
+		StatusCode: http.StatusOK,
+		Header:     http.Header{"Content-Type": []string{"application/json"}},
+		Body:       io.NopCloser(bytes.NewReader(body)),
+	}
+	svc := &GatewayService{
+		cfg:              &config.Config{},
+		rateLimitService: &RateLimitService{},
+	}
+	account := &Account{ID: 1, Platform: PlatformAnthropic, Type: AccountTypeAPIKey}
+
+	usage, err := svc.handleNonStreamingResponse(context.Background(), resp, c, account, "claude-haiku-4-5", "claude-haiku-4-5")
+
+	require.NoError(t, err)
+	require.NotNil(t, usage)
+	require.False(t, account.IsAnthropicAPIKeyPassthroughEnabled())
+	require.Equal(t, 10, usage.InputTokens)
+	require.Equal(t, 78, usage.OutputTokens)
+	require.True(t, usage.CreditsSeen)
+	require.InDelta(t, credits, usage.Credits, 1e-12)
+	require.JSONEq(t, string(body), rec.Body.String())
+
+	const unitPrice = 0.13
+	group := &Group{ID: 2, CreditBilling: GroupCreditBilling{Enabled: true, UnitPrice: unitPrice}}
+	cost := creditBillingCost(group, unitPrice, usage.Credits, usage.CreditsSeen)
+	want := QuantizeUsageBillingAmount(usage.Credits * unitPrice)
+	require.NotNil(t, cost)
+	require.Equal(t, BillingModeKiroCredit, cost.BillingMode)
+	require.InDelta(t, want, cost.ActualCost, 1e-12)
+	require.NotZero(t, cost.ActualCost)
+
+	log := &UsageLog{}
+	applyCreditBillingSnapshot(log, cost)
+	require.NotNil(t, log.BillingMode)
+	require.Equal(t, BillingModeKiroCredit, *log.BillingMode)
+	require.NotNil(t, log.Credits)
+	require.InDelta(t, credits, *log.Credits, 1e-12)
+	require.NotNil(t, log.CreditPrice)
+	require.InDelta(t, unitPrice, *log.CreditPrice, 1e-12)
+	require.InDelta(t, want, log.ActualCost, 1e-12)
+}
+
 func TestHandleNonStreamingResponseAnthropicAPIKeyPassthrough_NonJSON2xxTriggersFailover(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	rec := httptest.NewRecorder()
