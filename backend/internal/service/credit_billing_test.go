@@ -144,6 +144,46 @@ func TestApplyCreditBillingSnapshot_IgnoresTokenCost(t *testing.T) {
 	}
 }
 
+func TestProviderUsageCredits_BillsCreditsTimesUnitPrice(t *testing.T) {
+	body := []byte(`{"id":"msg_smoke","type":"message","role":"assistant","model":"claude-haiku-4-5","content":[{"type":"text","text":"hi"}],"usage":{"input_tokens":12,"output_tokens":4},"provider_usage":{"provider":"kiro","credits":0.00428875}}`)
+	usage := parseClaudeUsageFromResponseBody(body)
+	if usage == nil || !usage.CreditsSeen || usage.Credits != 0.00428875 {
+		t.Fatalf("usage=%+v", usage)
+	}
+	const unitPrice = 0.13
+	group := &Group{ID: 2, CreditBilling: GroupCreditBilling{Enabled: true, UnitPrice: unitPrice}}
+	cost := creditBillingCost(group, group.CreditBilling.UnitPrice, usage.Credits, usage.CreditsSeen)
+	want := QuantizeUsageBillingAmount(usage.Credits * unitPrice)
+	if cost == nil || cost.BillingMode != BillingModeKiroCredit {
+		t.Fatalf("cost=%+v", cost)
+	}
+	if cost.ActualCost != want || cost.ActualCost == 0 {
+		t.Fatalf("actual=%v want=%v", cost.ActualCost, want)
+	}
+	log := &UsageLog{}
+	applyCreditBillingSnapshot(log, cost)
+	if log.BillingMode == nil || *log.BillingMode != BillingModeKiroCredit {
+		t.Fatalf("mode=%v", log.BillingMode)
+	}
+	if log.Credits == nil || *log.Credits != 0.00428875 {
+		t.Fatalf("log credits=%v", log.Credits)
+	}
+	if log.CreditPrice == nil || *log.CreditPrice != unitPrice {
+		t.Fatalf("log price=%v", log.CreditPrice)
+	}
+	if log.ActualCost != want || log.InputCost != 0 || log.OutputCost != 0 {
+		t.Fatalf("log cost=%v input=%v output=%v", log.ActualCost, log.InputCost, log.OutputCost)
+	}
+}
+
+func TestParseSSEUsagePassthrough_ProviderUsageCredits(t *testing.T) {
+	usage := &ClaudeUsage{}
+	parseSSEUsagePassthrough(`{"type":"message_delta","usage":{"output_tokens":4},"provider_usage":{"provider":"kiro","credits":0.00428875}}`, usage)
+	if !usage.CreditsSeen || usage.Credits != 0.00428875 {
+		t.Fatalf("credits=%v seen=%v", usage.Credits, usage.CreditsSeen)
+	}
+}
+
 func TestParseSSEUsage_CreditMeteringSurvivesLaterTokenUsage(t *testing.T) {
 	svc := &OpenAIGatewayService{}
 	usage := &OpenAIUsage{}
