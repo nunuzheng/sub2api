@@ -580,6 +580,12 @@ export interface Group {
   description: string | null
   platform: GroupPlatform
   rate_multiplier: number
+  credit_billing?: {
+    enabled: boolean
+    unit_price: number
+    started_at?: string
+    cost_per_credit?: number
+  } | null
   rpm_limit?: number // Group-level RPM cap (0 = unlimited); overrides user-level rpm_limit when set
   max_reasoning_effort?: string // Anthropic/OpenAI reasoning ceiling; empty means unlimited
   max_reasoning_effort_over_limit?: string // downgrade (default) or deny when over the ceiling
@@ -1829,6 +1835,8 @@ export interface UsageLog {
   cache_read_cost: number
   total_cost: number
   actual_cost: number
+  credits?: number | null
+  credit_price?: number | null
   rate_multiplier: number
   long_context_billing_applied: boolean
   billing_type: number

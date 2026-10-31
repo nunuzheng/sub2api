@@ -1124,6 +1124,17 @@ func (s *APIKeyService) GetUserGroupVisibility(ctx context.Context, userID int64
 
 // GetUserGroupRates 获取用户的专属分组倍率配置
 // 返回 map[groupID]rateMultiplier
+func (s *APIKeyService) GetUserCreditUnitPrices(ctx context.Context, userID int64) (map[int64]float64, error) {
+	if s == nil || s.userGroupRateRepo == nil {
+		return nil, nil
+	}
+	store, ok := s.userGroupRateRepo.(UserGroupCreditPriceRepository)
+	if !ok || store == nil {
+		return nil, nil
+	}
+	return store.ListCreditUnitPricesByUser(ctx, userID)
+}
+
 func (s *APIKeyService) GetUserGroupRates(ctx context.Context, userID int64) (map[int64]float64, error) {
 	if s.userGroupRateRepo == nil {
 		return nil, nil

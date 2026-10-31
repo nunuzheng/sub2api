@@ -128,6 +128,11 @@ export interface SubscriptionPlan {
   group_platform?: string
   group_name?: string
   rate_multiplier?: number
+  credit_billing?: {
+    enabled: boolean
+    unit_price: number
+    started_at?: string
+  } | null
   peak_rate_enabled?: boolean
   peak_start?: string
   peak_end?: string

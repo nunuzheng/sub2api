@@ -61,7 +61,9 @@ export default {
 
   // Groups (shared)
   groups: {
-    subscription: 'Sub'
+    subscription: 'Sub',
+    creditBadge: 'Upstream credits',
+    creditCustom: 'Your price'
   },
 
   // API Keys
@@ -631,6 +633,9 @@ export default {
       billingModePerRequest: 'Per Request',
       billingModeImage: 'Per Image',
       billingModeVideo: 'Per Video',
+      billingModeKiroCredit: 'Credit',
+      billingModeKiroCreditMissing: 'Credit pending review (not charged)',
+      billingModeKiroCreditError: 'Charge pending review',
       videoPrice: 'Video Price',
       unitPerSecond: '/ second',
       inputPrice: 'Input',
@@ -663,7 +668,8 @@ export default {
       rateLabel: 'Rate',
       modelLabel: 'Model',
       searchPlaceholder: 'Search models',
-      all: 'All'
+      all: 'All',
+      credit: 'By credit'
     },
     badges: {
       exclusive: 'Exclusive',
@@ -673,6 +679,10 @@ export default {
       noModels: 'No models configured for this group',
       noPricing: 'Pricing not configured',
       peakNote: 'Peak hours {window}: billing rate ×{multiplier}',
+      creditBanner: 'Charged by upstream credits · ${price}/credit',
+      creditFormula: 'Charge = upstream credits × unit price (account balance)',
+      creditBadge: 'Upstream credits',
+      creditColumn: 'Price per credit (account balance)',
       longContextDisabledNote: 'Long-context tier pricing is disabled for this group: requests above the threshold are billed at the base tier; official tiers are for reference only'
     },
     table: {

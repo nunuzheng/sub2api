@@ -206,8 +206,10 @@ type CostBreakdown struct {
 	CacheCreationCost         float64
 	CacheReadCost             float64
 	TotalCost                 float64
-	ActualCost                float64 // 应用倍率后的实际费用
-	BillingMode               string  // 计费模式（"token"/"per_request"/"image"），由 CalculateCostUnified 填充
+	ActualCost                float64 // 应用倍率后的实际费用；credit 模式为 credits × credit_price，不再乘倍率
+	BillingMode               string  // 计费模式（token/per_request/image/video，或用量上的 kiro_credit*）
+	Credits                   float64 // credit 模式：上游消耗的 credit
+	CreditPrice               float64 // credit 模式：结算时的分组单价快照（USD/credit）
 	LongContextBillingApplied bool
 }
 

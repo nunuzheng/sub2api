@@ -124,6 +124,26 @@ func (_u *GroupUpdate) AddRateMultiplier(v float64) *GroupUpdate {
 	return _u
 }
 
+// SetCreditBilling sets the "credit_billing" field.
+func (_u *GroupUpdate) SetCreditBilling(v domain.GroupCreditBilling) *GroupUpdate {
+	_u.mutation.SetCreditBilling(v)
+	return _u
+}
+
+// SetNillableCreditBilling sets the "credit_billing" field if the given value is not nil.
+func (_u *GroupUpdate) SetNillableCreditBilling(v *domain.GroupCreditBilling) *GroupUpdate {
+	if v != nil {
+		_u.SetCreditBilling(*v)
+	}
+	return _u
+}
+
+// ClearCreditBilling clears the value of the "credit_billing" field.
+func (_u *GroupUpdate) ClearCreditBilling() *GroupUpdate {
+	_u.mutation.ClearCreditBilling()
+	return _u
+}
+
 // SetPeakRateEnabled sets the "peak_rate_enabled" field.
 func (_u *GroupUpdate) SetPeakRateEnabled(v bool) *GroupUpdate {
 	_u.mutation.SetPeakRateEnabled(v)
@@ -1610,6 +1630,12 @@ func (_u *GroupUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if value, ok := _u.mutation.AddedRateMultiplier(); ok {
 		_spec.AddField(group.FieldRateMultiplier, field.TypeFloat64, value)
 	}
+	if value, ok := _u.mutation.CreditBilling(); ok {
+		_spec.SetField(group.FieldCreditBilling, field.TypeJSON, value)
+	}
+	if _u.mutation.CreditBillingCleared() {
+		_spec.ClearField(group.FieldCreditBilling, field.TypeJSON)
+	}
 	if value, ok := _u.mutation.PeakRateEnabled(); ok {
 		_spec.SetField(group.FieldPeakRateEnabled, field.TypeBool, value)
 	}
@@ -2341,6 +2367,26 @@ func (_u *GroupUpdateOne) SetNillableRateMultiplier(v *float64) *GroupUpdateOne 
 // AddRateMultiplier adds value to the "rate_multiplier" field.
 func (_u *GroupUpdateOne) AddRateMultiplier(v float64) *GroupUpdateOne {
 	_u.mutation.AddRateMultiplier(v)
+	return _u
+}
+
+// SetCreditBilling sets the "credit_billing" field.
+func (_u *GroupUpdateOne) SetCreditBilling(v domain.GroupCreditBilling) *GroupUpdateOne {
+	_u.mutation.SetCreditBilling(v)
+	return _u
+}
+
+// SetNillableCreditBilling sets the "credit_billing" field if the given value is not nil.
+func (_u *GroupUpdateOne) SetNillableCreditBilling(v *domain.GroupCreditBilling) *GroupUpdateOne {
+	if v != nil {
+		_u.SetCreditBilling(*v)
+	}
+	return _u
+}
+
+// ClearCreditBilling clears the value of the "credit_billing" field.
+func (_u *GroupUpdateOne) ClearCreditBilling() *GroupUpdateOne {
+	_u.mutation.ClearCreditBilling()
 	return _u
 }
 
@@ -3859,6 +3905,12 @@ func (_u *GroupUpdateOne) sqlSave(ctx context.Context) (_node *Group, err error)
 	}
 	if value, ok := _u.mutation.AddedRateMultiplier(); ok {
 		_spec.AddField(group.FieldRateMultiplier, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.CreditBilling(); ok {
+		_spec.SetField(group.FieldCreditBilling, field.TypeJSON, value)
+	}
+	if _u.mutation.CreditBillingCleared() {
+		_spec.ClearField(group.FieldCreditBilling, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.PeakRateEnabled(); ok {
 		_spec.SetField(group.FieldPeakRateEnabled, field.TypeBool, value)

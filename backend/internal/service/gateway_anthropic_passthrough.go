@@ -704,6 +704,7 @@ func parseSSEUsagePassthrough(data string, usage *ClaudeUsage) {
 		usageNode = parsed.Get("message.usage")
 	}
 	normalizeAnthropicCompatiblePromptUsage(usageNode, usage)
+	absorbClaudeCredits(usage, []byte(data))
 }
 
 // normalizeAnthropicCompatiblePromptUsage converts provider-native OpenAI-style
@@ -793,6 +794,7 @@ func parseClaudeUsageFromResponseBody(body []byte) *ClaudeUsage {
 		}
 	}
 	normalizeAnthropicCompatiblePromptUsage(usageNode, usage)
+	absorbClaudeCredits(usage, body)
 	return usage
 }
 

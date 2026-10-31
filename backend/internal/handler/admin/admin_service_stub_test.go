@@ -405,6 +405,14 @@ func (s *stubAdminService) GetGroupRateMultipliers(_ context.Context, _ int64) (
 	return nil, nil
 }
 
+func (s *stubAdminService) GetGroupCreditPrices(_ context.Context, _ int64) ([]service.UserGroupCreditPriceEntry, error) {
+	return nil, nil
+}
+
+func (s *stubAdminService) ReplaceGroupCreditPrices(_ context.Context, _ int64, _ []service.GroupCreditPriceInput) error {
+	return nil
+}
+
 func (s *stubAdminService) ClearGroupRateMultipliers(_ context.Context, _ int64) error {
 	s.advancedGroupOperationCalls++
 	return nil

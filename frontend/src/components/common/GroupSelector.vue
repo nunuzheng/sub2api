@@ -42,6 +42,7 @@
           :platform="group.platform"
           :subscription-type="group.subscription_type || undefined"
           :rate-multiplier="group.rate_multiplier == null ? undefined : group.rate_multiplier"
+          :credit-unit-price="group.credit_billing?.enabled ? group.credit_billing.unit_price : null"
           class="min-w-0 flex-1"
         />
         <span class="shrink-0 text-xs text-gray-400">{{ group.account_count || 0 }}</span>

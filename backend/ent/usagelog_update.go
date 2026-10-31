@@ -947,6 +947,60 @@ func (_u *UsageLogUpdate) SetNillableCacheTTLOverridden(v *bool) *UsageLogUpdate
 	return _u
 }
 
+// SetCredits sets the "credits" field.
+func (_u *UsageLogUpdate) SetCredits(v float64) *UsageLogUpdate {
+	_u.mutation.ResetCredits()
+	_u.mutation.SetCredits(v)
+	return _u
+}
+
+// SetNillableCredits sets the "credits" field if the given value is not nil.
+func (_u *UsageLogUpdate) SetNillableCredits(v *float64) *UsageLogUpdate {
+	if v != nil {
+		_u.SetCredits(*v)
+	}
+	return _u
+}
+
+// AddCredits adds value to the "credits" field.
+func (_u *UsageLogUpdate) AddCredits(v float64) *UsageLogUpdate {
+	_u.mutation.AddCredits(v)
+	return _u
+}
+
+// ClearCredits clears the value of the "credits" field.
+func (_u *UsageLogUpdate) ClearCredits() *UsageLogUpdate {
+	_u.mutation.ClearCredits()
+	return _u
+}
+
+// SetCreditPrice sets the "credit_price" field.
+func (_u *UsageLogUpdate) SetCreditPrice(v float64) *UsageLogUpdate {
+	_u.mutation.ResetCreditPrice()
+	_u.mutation.SetCreditPrice(v)
+	return _u
+}
+
+// SetNillableCreditPrice sets the "credit_price" field if the given value is not nil.
+func (_u *UsageLogUpdate) SetNillableCreditPrice(v *float64) *UsageLogUpdate {
+	if v != nil {
+		_u.SetCreditPrice(*v)
+	}
+	return _u
+}
+
+// AddCreditPrice adds value to the "credit_price" field.
+func (_u *UsageLogUpdate) AddCreditPrice(v float64) *UsageLogUpdate {
+	_u.mutation.AddCreditPrice(v)
+	return _u
+}
+
+// ClearCreditPrice clears the value of the "credit_price" field.
+func (_u *UsageLogUpdate) ClearCreditPrice() *UsageLogUpdate {
+	_u.mutation.ClearCreditPrice()
+	return _u
+}
+
 // SetUser sets the "user" edge to the User entity.
 func (_u *UsageLogUpdate) SetUser(v *User) *UsageLogUpdate {
 	return _u.SetUserID(v.ID)
@@ -1380,6 +1434,24 @@ func (_u *UsageLogUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if value, ok := _u.mutation.CacheTTLOverridden(); ok {
 		_spec.SetField(usagelog.FieldCacheTTLOverridden, field.TypeBool, value)
+	}
+	if value, ok := _u.mutation.Credits(); ok {
+		_spec.SetField(usagelog.FieldCredits, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.AddedCredits(); ok {
+		_spec.AddField(usagelog.FieldCredits, field.TypeFloat64, value)
+	}
+	if _u.mutation.CreditsCleared() {
+		_spec.ClearField(usagelog.FieldCredits, field.TypeFloat64)
+	}
+	if value, ok := _u.mutation.CreditPrice(); ok {
+		_spec.SetField(usagelog.FieldCreditPrice, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.AddedCreditPrice(); ok {
+		_spec.AddField(usagelog.FieldCreditPrice, field.TypeFloat64, value)
+	}
+	if _u.mutation.CreditPriceCleared() {
+		_spec.ClearField(usagelog.FieldCreditPrice, field.TypeFloat64)
 	}
 	if _u.mutation.UserCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -2461,6 +2533,60 @@ func (_u *UsageLogUpdateOne) SetNillableCacheTTLOverridden(v *bool) *UsageLogUpd
 	return _u
 }
 
+// SetCredits sets the "credits" field.
+func (_u *UsageLogUpdateOne) SetCredits(v float64) *UsageLogUpdateOne {
+	_u.mutation.ResetCredits()
+	_u.mutation.SetCredits(v)
+	return _u
+}
+
+// SetNillableCredits sets the "credits" field if the given value is not nil.
+func (_u *UsageLogUpdateOne) SetNillableCredits(v *float64) *UsageLogUpdateOne {
+	if v != nil {
+		_u.SetCredits(*v)
+	}
+	return _u
+}
+
+// AddCredits adds value to the "credits" field.
+func (_u *UsageLogUpdateOne) AddCredits(v float64) *UsageLogUpdateOne {
+	_u.mutation.AddCredits(v)
+	return _u
+}
+
+// ClearCredits clears the value of the "credits" field.
+func (_u *UsageLogUpdateOne) ClearCredits() *UsageLogUpdateOne {
+	_u.mutation.ClearCredits()
+	return _u
+}
+
+// SetCreditPrice sets the "credit_price" field.
+func (_u *UsageLogUpdateOne) SetCreditPrice(v float64) *UsageLogUpdateOne {
+	_u.mutation.ResetCreditPrice()
+	_u.mutation.SetCreditPrice(v)
+	return _u
+}
+
+// SetNillableCreditPrice sets the "credit_price" field if the given value is not nil.
+func (_u *UsageLogUpdateOne) SetNillableCreditPrice(v *float64) *UsageLogUpdateOne {
+	if v != nil {
+		_u.SetCreditPrice(*v)
+	}
+	return _u
+}
+
+// AddCreditPrice adds value to the "credit_price" field.
+func (_u *UsageLogUpdateOne) AddCreditPrice(v float64) *UsageLogUpdateOne {
+	_u.mutation.AddCreditPrice(v)
+	return _u
+}
+
+// ClearCreditPrice clears the value of the "credit_price" field.
+func (_u *UsageLogUpdateOne) ClearCreditPrice() *UsageLogUpdateOne {
+	_u.mutation.ClearCreditPrice()
+	return _u
+}
+
 // SetUser sets the "user" edge to the User entity.
 func (_u *UsageLogUpdateOne) SetUser(v *User) *UsageLogUpdateOne {
 	return _u.SetUserID(v.ID)
@@ -2924,6 +3050,24 @@ func (_u *UsageLogUpdateOne) sqlSave(ctx context.Context) (_node *UsageLog, err 
 	}
 	if value, ok := _u.mutation.CacheTTLOverridden(); ok {
 		_spec.SetField(usagelog.FieldCacheTTLOverridden, field.TypeBool, value)
+	}
+	if value, ok := _u.mutation.Credits(); ok {
+		_spec.SetField(usagelog.FieldCredits, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.AddedCredits(); ok {
+		_spec.AddField(usagelog.FieldCredits, field.TypeFloat64, value)
+	}
+	if _u.mutation.CreditsCleared() {
+		_spec.ClearField(usagelog.FieldCredits, field.TypeFloat64)
+	}
+	if value, ok := _u.mutation.CreditPrice(); ok {
+		_spec.SetField(usagelog.FieldCreditPrice, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.AddedCreditPrice(); ok {
+		_spec.AddField(usagelog.FieldCreditPrice, field.TypeFloat64, value)
+	}
+	if _u.mutation.CreditPriceCleared() {
+		_spec.ClearField(usagelog.FieldCreditPrice, field.TypeFloat64)
 	}
 	if _u.mutation.UserCleared() {
 		edge := &sqlgraph.EdgeSpec{

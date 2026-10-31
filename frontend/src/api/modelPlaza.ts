@@ -78,6 +78,12 @@ export interface ModelPlazaGroup {
   video_rate_multiplier: number
   /** 分组是否启用长上下文阶梯计费；false 时实付列只展示最低档，官方阶梯仅供参考。 */
   long_context_pricing_enabled: boolean
+  credit_billing?: {
+    enabled: boolean
+    unit_price: number
+    started_at?: string
+  } | null
+  user_credit_unit_price?: number
   models: PlazaModel[]
 }
 

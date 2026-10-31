@@ -46,10 +46,10 @@
       <!-- Group quota info (compact) -->
       <div class="mb-3 grid grid-cols-2 gap-x-3 gap-y-1 rounded-lg bg-gray-50 px-3 py-2 text-xs dark:bg-dark-700/50">
         <div class="flex items-center justify-between">
-          <span class="text-gray-400 dark:text-dark-500">{{ t('payment.planCard.rate') }}</span>
+          <span class="text-gray-400 dark:text-dark-500">{{ plan.credit_billing?.enabled ? t('groups.creditBadge') : t('payment.planCard.rate') }}</span>
           <span class="font-medium text-gray-700 dark:text-gray-300">{{ rateDisplay }}</span>
         </div>
-        <div v-if="hasPeakRate" class="col-span-2 flex items-center justify-between gap-2">
+        <div v-if="hasPeakRate && !plan.credit_billing?.enabled" class="col-span-2 flex items-center justify-between gap-2">
           <span class="text-gray-400 dark:text-dark-500">{{ t('payment.planCard.peakRate') }}</span>
           <span class="text-right font-medium text-amber-700 dark:text-amber-300">{{ peakRateDisplay }}</span>
         </div>
@@ -150,6 +150,11 @@ const discountText = computed(() => {
 })
 
 const rateDisplay = computed(() => {
+  if (props.plan.credit_billing?.enabled) {
+    const price = props.plan.credit_billing.unit_price
+    const text = Number.isFinite(price) ? price.toFixed(8).replace(/0+$/, '').replace(/\.$/, '') : '0'
+    return `$${text}/credit`
+  }
   const rate = props.plan.rate_multiplier ?? 1
   return `×${Number(rate.toPrecision(10))}`
 })

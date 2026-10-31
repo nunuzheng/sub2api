@@ -61,7 +61,9 @@ export default {
 
   // Groups (shared)
   groups: {
-    subscription: '订阅'
+    subscription: '订阅',
+    creditBadge: '按上游实际积分',
+    creditCustom: '你的专属价格'
   },
 
   // API Keys
@@ -636,6 +638,9 @@ export default {
       billingModePerRequest: '按次',
       billingModeImage: '按图片',
       billingModeVideo: '按视频',
+      billingModeKiroCredit: '积分计费',
+      billingModeKiroCreditMissing: '积分待核对（未扣费）',
+      billingModeKiroCreditError: '扣费待核对',
       videoPrice: '视频单价',
       unitPerSecond: '/ 秒',
       inputPrice: '输入',
@@ -668,7 +673,8 @@ export default {
       rateLabel: '倍率',
       modelLabel: '模型',
       searchPlaceholder: '搜索模型名称',
-      all: '全部'
+      all: '全部',
+      credit: '按 Credit 计价'
     },
     badges: {
       exclusive: '专属分组',
@@ -678,6 +684,10 @@ export default {
       noModels: '该分组暂未配置模型',
       noPricing: '未配置定价',
       peakNote: '高峰时段 {window} 计费倍率 ×{multiplier}',
+      creditBanner: '按上游实际积分扣费 · ${price}/credit',
+      creditFormula: '实际扣款 = 上游实际 credit × 每积分单价（站内余额）',
+      creditBadge: '按上游实际积分',
+      creditColumn: '每积分价格（站内余额）',
       longContextDisabledNote: '该分组未启用长上下文阶梯计费，超阈值请求仍按基础档计费，官方阶梯仅供参考'
     },
     table: {

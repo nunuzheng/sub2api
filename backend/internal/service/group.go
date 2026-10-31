@@ -22,6 +22,9 @@ type Group struct {
 	I18n           GroupI18n // 名称与描述的界面语言译文；缺失的语言沿用 Name/Description
 	Platform       string
 	RateMultiplier float64
+	// CreditBilling 启用后按上游 credit × unit_price 扣客户余额。
+	// 未启用时分组仍走 token 价表和 rate_multiplier。
+	CreditBilling GroupCreditBilling
 	// 高峰时段倍率：peak_rate_enabled 为 true 且当前时刻处于 [PeakStart, PeakEnd) 时，
 	// token 计费倍率额外乘以 PeakRateMultiplier。详见 PeakMultiplierAt。
 	PeakRateEnabled    bool

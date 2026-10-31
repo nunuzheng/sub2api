@@ -660,6 +660,16 @@ func RateMultiplierLTE(v float64) predicate.Group {
 	return predicate.Group(sql.FieldLTE(FieldRateMultiplier, v))
 }
 
+// CreditBillingIsNil applies the IsNil predicate on the "credit_billing" field.
+func CreditBillingIsNil() predicate.Group {
+	return predicate.Group(sql.FieldIsNull(FieldCreditBilling))
+}
+
+// CreditBillingNotNil applies the NotNil predicate on the "credit_billing" field.
+func CreditBillingNotNil() predicate.Group {
+	return predicate.Group(sql.FieldNotNull(FieldCreditBilling))
+}
+
 // PeakRateEnabledEQ applies the EQ predicate on the "peak_rate_enabled" field.
 func PeakRateEnabledEQ(v bool) predicate.Group {
 	return predicate.Group(sql.FieldEQ(FieldPeakRateEnabled, v))

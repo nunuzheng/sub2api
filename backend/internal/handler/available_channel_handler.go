@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"encoding/json"
 	"sort"
 
 	"github.com/Wei-Shaw/sub2api/internal/pkg/response"
@@ -52,19 +53,48 @@ func (h *AvailableChannelHandler) featureEnabled(c *gin.Context) bool {
 // 订阅视觉加深），并展示默认倍率与高峰倍率规则；用户专属倍率前端走
 // /groups/rates，和 API 密钥页面保持一致。
 type userAvailableGroup struct {
-	ID                 int64   `json:"id"`
-	Name               string  `json:"name"`
-	Platform           string  `json:"platform"`
-	SubscriptionType   string  `json:"subscription_type"`
-	RateMultiplier     float64 `json:"rate_multiplier"`
-	PeakRateEnabled    bool    `json:"peak_rate_enabled"`
-	PeakStart          string  `json:"peak_start"`
-	PeakEnd            string  `json:"peak_end"`
-	PeakRateMultiplier float64 `json:"peak_rate_multiplier"`
-	IsExclusive        bool    `json:"is_exclusive"`
+	ID                 int64                       `json:"id"`
+	Name               string                      `json:"name"`
+	Platform           string                      `json:"platform"`
+	SubscriptionType   string                      `json:"subscription_type"`
+	RateMultiplier     float64                     `json:"rate_multiplier"`
+	CreditBilling      *service.GroupCreditBilling `json:"credit_billing,omitempty"`
+	PeakRateEnabled    bool                        `json:"peak_rate_enabled"`
+	PeakStart          string                      `json:"peak_start"`
+	PeakEnd            string                      `json:"peak_end"`
+	PeakRateMultiplier float64                     `json:"peak_rate_multiplier"`
+	IsExclusive        bool                        `json:"is_exclusive"`
 
 	// 不对外输出；List 按请求语言把 Name 换成译文后丢弃。
 	i18n service.GroupI18n
+}
+
+func (g userAvailableGroup) MarshalJSON() ([]byte, error) {
+	type alias userAvailableGroup
+	payload := alias(g)
+	credit := payload.CreditBilling != nil && payload.CreditBilling.Enabled
+	if payload.CreditBilling != nil {
+		pub := payload.CreditBilling.Public()
+		payload.CreditBilling = &pub
+	}
+	raw, err := json.Marshal(payload)
+	if err != nil || !credit {
+		return raw, err
+	}
+	var obj map[string]any
+	if err := json.Unmarshal(raw, &obj); err != nil {
+		return nil, err
+	}
+	for _, key := range []string{
+		"rate_multiplier",
+		"peak_rate_enabled", "peak_start", "peak_end", "peak_rate_multiplier",
+	} {
+		delete(obj, key)
+	}
+	if cb, ok := obj["credit_billing"].(map[string]any); ok {
+		delete(cb, "cost_per_credit")
+	}
+	return json.Marshal(obj)
 }
 
 // userSupportedModelPricing 用户可见的定价字段白名单。
@@ -263,7 +293,7 @@ func filterUserVisibleGroups(
 		if _, ok := allowed[g.ID]; !ok {
 			continue
 		}
-		visible = append(visible, userAvailableGroup{
+		item := userAvailableGroup{
 			ID:                 g.ID,
 			Name:               g.Name,
 			i18n:               g.I18n,
@@ -275,7 +305,12 @@ func filterUserVisibleGroups(
 			PeakEnd:            g.PeakEnd,
 			PeakRateMultiplier: g.PeakRateMultiplier,
 			IsExclusive:        g.IsExclusive,
-		})
+		}
+		if g.CreditBilling.Enabled {
+			pub := g.CreditBilling.Public()
+			item.CreditBilling = &pub
+		}
+		visible = append(visible, item)
 	}
 	return visible
 }

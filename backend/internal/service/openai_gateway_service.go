@@ -229,6 +229,10 @@ type OpenAIUsage struct {
 	CacheCreationInputTokens int `json:"cache_creation_input_tokens,omitempty"`
 	CacheReadInputTokens     int `json:"cache_read_input_tokens,omitempty"`
 	ImageOutputTokens        int `json:"image_output_tokens,omitempty"`
+	// Credits 是上游报告的本次消耗 credit。token 计费不读取该字段。
+	Credits         float64 `json:"-"`
+	CreditsExplicit bool    `json:"-"`
+	CreditsSeen     bool    `json:"-"`
 }
 
 // OpenAIForwardResult represents the result of forwarding
@@ -458,6 +462,7 @@ type OpenAIGatewayService struct {
 	billingService        *BillingService
 	rateLimitService      *RateLimitService
 	billingCacheService   *BillingCacheService
+	userGroupRateRepo     UserGroupRateRepository
 	userGroupRateResolver *userGroupRateResolver
 	httpUpstream          HTTPUpstream
 	pluginManager         *PluginManager
@@ -557,6 +562,7 @@ func NewOpenAIGatewayService(
 		billingService:      billingService,
 		rateLimitService:    rateLimitService,
 		billingCacheService: billingCacheService,
+		userGroupRateRepo:   userGroupRateRepo,
 		userGroupRateResolver: newUserGroupRateResolver(
 			userGroupRateRepo,
 			nil,

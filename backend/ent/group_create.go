@@ -112,6 +112,20 @@ func (_c *GroupCreate) SetNillableRateMultiplier(v *float64) *GroupCreate {
 	return _c
 }
 
+// SetCreditBilling sets the "credit_billing" field.
+func (_c *GroupCreate) SetCreditBilling(v domain.GroupCreditBilling) *GroupCreate {
+	_c.mutation.SetCreditBilling(v)
+	return _c
+}
+
+// SetNillableCreditBilling sets the "credit_billing" field if the given value is not nil.
+func (_c *GroupCreate) SetNillableCreditBilling(v *domain.GroupCreditBilling) *GroupCreate {
+	if v != nil {
+		_c.SetCreditBilling(*v)
+	}
+	return _c
+}
+
 // SetPeakRateEnabled sets the "peak_rate_enabled" field.
 func (_c *GroupCreate) SetPeakRateEnabled(v bool) *GroupCreate {
 	_c.mutation.SetPeakRateEnabled(v)
@@ -1075,6 +1089,10 @@ func (_c *GroupCreate) defaults() error {
 		v := group.DefaultRateMultiplier
 		_c.mutation.SetRateMultiplier(v)
 	}
+	if _, ok := _c.mutation.CreditBilling(); !ok {
+		v := group.DefaultCreditBilling
+		_c.mutation.SetCreditBilling(v)
+	}
 	if _, ok := _c.mutation.PeakRateEnabled(); !ok {
 		v := group.DefaultPeakRateEnabled
 		_c.mutation.SetPeakRateEnabled(v)
@@ -1506,6 +1524,10 @@ func (_c *GroupCreate) createSpec() (*Group, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.RateMultiplier(); ok {
 		_spec.SetField(group.FieldRateMultiplier, field.TypeFloat64, value)
 		_node.RateMultiplier = value
+	}
+	if value, ok := _c.mutation.CreditBilling(); ok {
+		_spec.SetField(group.FieldCreditBilling, field.TypeJSON, value)
+		_node.CreditBilling = value
 	}
 	if value, ok := _c.mutation.PeakRateEnabled(); ok {
 		_spec.SetField(group.FieldPeakRateEnabled, field.TypeBool, value)
@@ -1994,6 +2016,24 @@ func (u *GroupUpsert) UpdateRateMultiplier() *GroupUpsert {
 // AddRateMultiplier adds v to the "rate_multiplier" field.
 func (u *GroupUpsert) AddRateMultiplier(v float64) *GroupUpsert {
 	u.Add(group.FieldRateMultiplier, v)
+	return u
+}
+
+// SetCreditBilling sets the "credit_billing" field.
+func (u *GroupUpsert) SetCreditBilling(v domain.GroupCreditBilling) *GroupUpsert {
+	u.Set(group.FieldCreditBilling, v)
+	return u
+}
+
+// UpdateCreditBilling sets the "credit_billing" field to the value that was provided on create.
+func (u *GroupUpsert) UpdateCreditBilling() *GroupUpsert {
+	u.SetExcluded(group.FieldCreditBilling)
+	return u
+}
+
+// ClearCreditBilling clears the value of the "credit_billing" field.
+func (u *GroupUpsert) ClearCreditBilling() *GroupUpsert {
+	u.SetNull(group.FieldCreditBilling)
 	return u
 }
 
@@ -3137,6 +3177,27 @@ func (u *GroupUpsertOne) AddRateMultiplier(v float64) *GroupUpsertOne {
 func (u *GroupUpsertOne) UpdateRateMultiplier() *GroupUpsertOne {
 	return u.Update(func(s *GroupUpsert) {
 		s.UpdateRateMultiplier()
+	})
+}
+
+// SetCreditBilling sets the "credit_billing" field.
+func (u *GroupUpsertOne) SetCreditBilling(v domain.GroupCreditBilling) *GroupUpsertOne {
+	return u.Update(func(s *GroupUpsert) {
+		s.SetCreditBilling(v)
+	})
+}
+
+// UpdateCreditBilling sets the "credit_billing" field to the value that was provided on create.
+func (u *GroupUpsertOne) UpdateCreditBilling() *GroupUpsertOne {
+	return u.Update(func(s *GroupUpsert) {
+		s.UpdateCreditBilling()
+	})
+}
+
+// ClearCreditBilling clears the value of the "credit_billing" field.
+func (u *GroupUpsertOne) ClearCreditBilling() *GroupUpsertOne {
+	return u.Update(func(s *GroupUpsert) {
+		s.ClearCreditBilling()
 	})
 }
 
@@ -4611,6 +4672,27 @@ func (u *GroupUpsertBulk) AddRateMultiplier(v float64) *GroupUpsertBulk {
 func (u *GroupUpsertBulk) UpdateRateMultiplier() *GroupUpsertBulk {
 	return u.Update(func(s *GroupUpsert) {
 		s.UpdateRateMultiplier()
+	})
+}
+
+// SetCreditBilling sets the "credit_billing" field.
+func (u *GroupUpsertBulk) SetCreditBilling(v domain.GroupCreditBilling) *GroupUpsertBulk {
+	return u.Update(func(s *GroupUpsert) {
+		s.SetCreditBilling(v)
+	})
+}
+
+// UpdateCreditBilling sets the "credit_billing" field to the value that was provided on create.
+func (u *GroupUpsertBulk) UpdateCreditBilling() *GroupUpsertBulk {
+	return u.Update(func(s *GroupUpsert) {
+		s.UpdateCreditBilling()
+	})
+}
+
+// ClearCreditBilling clears the value of the "credit_billing" field.
+func (u *GroupUpsertBulk) ClearCreditBilling() *GroupUpsertBulk {
+	return u.Update(func(s *GroupUpsert) {
+		s.ClearCreditBilling()
 	})
 }
 

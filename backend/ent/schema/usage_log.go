@@ -181,6 +181,17 @@ func (UsageLog) Fields() []ent.Field {
 		field.Bool("cache_ttl_overridden").
 			Default(false),
 
+		// credit 模式对账快照。token 模式保持 NULL。
+		field.Float("credits").
+			Optional().
+			Nillable().
+			SchemaType(map[string]string{dialect.Postgres: "decimal(20,8)"}).
+			Comment("上游消耗 credit；仅 credit 模式写入"),
+		field.Float("credit_price").
+			Optional().
+			Nillable().
+			SchemaType(map[string]string{dialect.Postgres: "decimal(20,8)"}).
+			Comment("结算时分组 credit 单价快照（USD/credit）"),
 		// 时间戳（只有 created_at，日志不可修改）
 		field.Time("created_at").
 			Default(time.Now).

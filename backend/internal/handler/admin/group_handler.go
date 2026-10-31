@@ -190,6 +190,7 @@ type CreateGroupRequest struct {
 	I18n                      service.GroupI18n             `json:"i18n"` // 名称与描述的界面语言译文
 	Platform                  string                        `json:"platform" binding:"omitempty,group_platform"`
 	RateMultiplier            float64                       `json:"rate_multiplier"`
+	CreditBilling             *service.GroupCreditBilling   `json:"credit_billing"`
 	IsExclusive               bool                          `json:"is_exclusive"`
 	SubscriptionType          string                        `json:"subscription_type" binding:"omitempty,oneof=standard subscription"`
 	DailyLimitUSD             optionalLimitField            `json:"daily_limit_usd"`
@@ -266,6 +267,7 @@ type UpdateGroupRequest struct {
 	I18n                      *service.GroupI18n             `json:"i18n"` // 缺省不修改，传入则整体替换
 	Platform                  string                         `json:"platform" binding:"omitempty,group_platform"`
 	RateMultiplier            *float64                       `json:"rate_multiplier"`
+	CreditBilling             *service.GroupCreditBilling    `json:"credit_billing"`
 	IsExclusive               *bool                          `json:"is_exclusive"`
 	Status                    string                         `json:"status" binding:"omitempty,oneof=active inactive"`
 	SubscriptionType          string                         `json:"subscription_type" binding:"omitempty,oneof=standard subscription"`
@@ -674,6 +676,7 @@ func (h *GroupHandler) Create(c *gin.Context) {
 		I18n:                            req.I18n,
 		Platform:                        req.Platform,
 		RateMultiplier:                  req.RateMultiplier,
+		CreditBilling:                   req.CreditBilling,
 		IsExclusive:                     req.IsExclusive,
 		SubscriptionType:                req.SubscriptionType,
 		DailyLimitUSD:                   req.DailyLimitUSD.ToServiceInput(),
@@ -821,6 +824,7 @@ func (h *GroupHandler) Update(c *gin.Context) {
 		I18n:                            req.I18n,
 		Platform:                        req.Platform,
 		RateMultiplier:                  req.RateMultiplier,
+		CreditBilling:                   req.CreditBilling,
 		IsExclusive:                     req.IsExclusive,
 		Status:                          req.Status,
 		SubscriptionType:                req.SubscriptionType,
@@ -995,6 +999,58 @@ func (h *GroupHandler) GetGroupAPIKeys(c *gin.Context) {
 		outKeys = append(outKeys, *dto.APIKeyFromService(&keys[i]))
 	}
 	response.Paginated(c, outKeys, total, page, pageSize)
+}
+
+type groupCreditPricesRequest struct {
+	Entries []service.GroupCreditPriceInput `json:"entries"`
+}
+
+// GetGroupCreditPrices lists per-user credit unit prices for a credit group.
+// GET /api/v1/admin/groups/:id/credit-prices
+func (h *GroupHandler) GetGroupCreditPrices(c *gin.Context) {
+	if h.rejectUnsupportedSimpleModeOperation(c, "advanced") {
+		return
+	}
+	groupID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil || groupID <= 0 {
+		response.BadRequest(c, "Invalid group ID")
+		return
+	}
+	entries, err := h.adminService.GetGroupCreditPrices(c.Request.Context(), groupID)
+	if err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+	if entries == nil {
+		entries = []service.UserGroupCreditPriceEntry{}
+	}
+	response.Success(c, gin.H{"entries": entries})
+}
+
+// ReplaceGroupCreditPrices replaces per-user credit unit prices.
+// PUT /api/v1/admin/groups/:id/credit-prices
+func (h *GroupHandler) ReplaceGroupCreditPrices(c *gin.Context) {
+	if h.rejectUnsupportedSimpleModeOperation(c, "advanced") {
+		return
+	}
+	groupID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil || groupID <= 0 {
+		response.BadRequest(c, "Invalid group ID")
+		return
+	}
+	var req groupCreditPricesRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, "Invalid request: "+err.Error())
+		return
+	}
+	if req.Entries == nil {
+		req.Entries = []service.GroupCreditPriceInput{}
+	}
+	if err := h.adminService.ReplaceGroupCreditPrices(c.Request.Context(), groupID, req.Entries); err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+	response.Success(c, gin.H{"message": "credit prices updated"})
 }
 
 // GetGroupRateMultipliers handles getting rate multipliers for users in a group

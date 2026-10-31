@@ -130,6 +130,7 @@ func GroupFromServiceShallow(g *service.Group) *Group {
 		return nil
 	}
 	out := groupFromServiceBase(g)
+	sanitizeCustomerCreditGroup(&out)
 	return &out
 }
 
@@ -167,6 +168,8 @@ func GroupFromServiceAdmin(g *service.Group) *AdminGroup {
 		RateLimitedAccountCount:     g.RateLimitedAccountCount,
 		SortOrder:                   g.SortOrder,
 	}
+	full := g.CreditBilling
+	out.CreditBilling = &full
 	if len(g.AccountGroups) > 0 {
 		out.AccountGroups = make([]AccountGroup, 0, len(g.AccountGroups))
 		for i := range g.AccountGroups {
@@ -177,6 +180,14 @@ func GroupFromServiceAdmin(g *service.Group) *AdminGroup {
 	return out
 }
 
+func publicGroupCreditBilling(b service.GroupCreditBilling) *service.GroupCreditBilling {
+	if !b.Enabled {
+		return nil
+	}
+	pub := b.Public()
+	return &pub
+}
+
 func groupFromServiceBase(g *service.Group) Group {
 	return Group{
 		ID:                              g.ID,
@@ -185,6 +196,7 @@ func groupFromServiceBase(g *service.Group) Group {
 		I18n:                            g.I18n,
 		Platform:                        g.Platform,
 		RateMultiplier:                  g.RateMultiplier,
+		CreditBilling:                   publicGroupCreditBilling(g.CreditBilling),
 		IsExclusive:                     g.IsExclusive,
 		Status:                          g.Status,
 		SubscriptionType:                g.SubscriptionType,
@@ -691,7 +703,7 @@ func usageLogFromServiceUser(l *service.UsageLog) UsageLog {
 	if requestedModel == "" {
 		requestedModel = l.Model
 	}
-	return UsageLog{
+	out := UsageLog{
 		ID:                        l.ID,
 		UserID:                    l.UserID,
 		APIKeyID:                  l.APIKeyID,
@@ -715,6 +727,8 @@ func usageLogFromServiceUser(l *service.UsageLog) UsageLog {
 		CacheReadCost:             l.CacheReadCost,
 		TotalCost:                 l.TotalCost,
 		ActualCost:                l.ActualCost,
+		Credits:                   l.Credits,
+		CreditPrice:               l.CreditPrice,
 		RateMultiplier:            l.RateMultiplier,
 		LongContextBillingApplied: l.LongContextBillingApplied,
 		BillingType:               l.BillingType,
@@ -746,6 +760,21 @@ func usageLogFromServiceUser(l *service.UsageLog) UsageLog {
 		Group:                     GroupFromServiceShallow(l.Group),
 		Subscription:              UserSubscriptionFromService(l.Subscription),
 	}
+	// Credit rows expose the sell amount only. Component costs stay on the
+	// stored log for operators, but customer and admin usage DTOs of a credit
+	// charge do not replay a token price table.
+	if out.BillingMode != nil && isCustomerCreditUsageMode(*out.BillingMode) {
+		out.InputCost = 0
+		out.OutputCost = 0
+		out.CacheCreationCost = 0
+		out.CacheReadCost = 0
+		out.ImageInputCost = 0
+		out.ImageOutputCost = 0
+		out.LongContextBillingApplied = false
+		out.RateMultiplier = 0
+		out.TotalCost = out.ActualCost
+	}
+	return out
 }
 
 // UsageLogFromService converts a service UsageLog to DTO for regular users.

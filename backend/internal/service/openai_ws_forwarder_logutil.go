@@ -205,13 +205,16 @@ func parseOpenAIWSResponseUsageFromCompletedEvent(message []byte, usage *OpenAIU
 	if parsedUsage, ok := extractOpenAIUsageFromJSONBytes(message); ok {
 		if openAIStreamEventTypeIsTerminal(effectiveOpenAISSEEventType(message, "")) {
 			if !openAIUsageHasTokens(&parsedUsage) && openAIUsageHasTokens(usage) {
+				absorbOpenAICredits(usage, message)
 				return
 			}
-			*usage = parsedUsage
+			assignOpenAIUsagePreserveCredits(usage, parsedUsage)
 		} else {
 			mergeOpenAIUsageNonZero(usage, parsedUsage)
 		}
+		return
 	}
+	absorbOpenAICredits(usage, message)
 }
 
 func parseOpenAIWSErrorEventFields(message []byte) (code string, errType string, errMessage string) {

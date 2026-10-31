@@ -1020,6 +1020,17 @@ func (s *GatewayService) calculateRecordUsageCost(
 	imageMultiplier float64,
 	pricingAt time.Time,
 ) *CostBreakdown {
+	// credit 分组按消耗 credit × 单价扣客户。缺积分或单价无效时实扣 0，不回退 token 价表。
+	if apiKey != nil && apiKey.Group != nil && apiKey.Group.UsesCreditBilling() {
+		credits := 0.0
+		seen := false
+		if result != nil {
+			credits = result.Usage.Credits
+			seen = result.Usage.CreditsSeen
+		}
+		price := effectiveCreditUnitPrice(ctx, s.userGroupRateRepo, apiKey.Group, apiKey.UserID)
+		return customerChargeOrToken(apiKey.Group, price, credits, seen, nil)
+	}
 	// 图片生成：渠道定价为 token 计费时走 token 路径，否则走图片计费。
 	// 分组按张计费开关只对专用图片端点生效，混合请求仍按 token 计费。
 	if result.ImageCount > 0 {
@@ -1372,6 +1383,7 @@ func (s *GatewayService) buildRecordUsageLog(
 	if result.ImageCount > 0 && (cost == nil || cost.BillingMode != string(BillingModeToken)) {
 		usageLog.RateMultiplier = imageMultiplier
 	}
+	applyCreditBillingSnapshot(usageLog, cost)
 	if cost != nil {
 		usageLog.InputCost = cost.InputCost
 		usageLog.OutputCost = cost.OutputCost

@@ -50,8 +50,9 @@
                   {{ subscription.group.description }}
                 </p>
                 <div class="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-gray-400 dark:text-gray-500">
-                  <span>{{ t('payment.planCard.rate') }}: ×{{ subscription.group?.rate_multiplier ?? 1 }}</span>
-                  <span v-if="subscriptionHasPeakRate(subscription)" class="text-amber-700 dark:text-amber-300">
+                  <span v-if="subscription.group?.credit_billing?.enabled">{{ t('groups.creditBadge') }}: ${{ formatCreditUnit(subscription.group.credit_billing.unit_price) }}/credit</span>
+                  <span v-else>{{ t('payment.planCard.rate') }}: ×{{ subscription.group?.rate_multiplier ?? 1 }}</span>
+                  <span v-if="!subscription.group?.credit_billing?.enabled && subscriptionHasPeakRate(subscription)" class="text-amber-700 dark:text-amber-300">
                     {{ t('payment.planCard.peakRate') }}: {{ subscriptionPeakRateLabel(subscription) }}
                   </span>
                 </div>
@@ -282,6 +283,11 @@ const appStore = useAppStore()
 
 const subscriptions = ref<UserSubscription[]>([])
 const loading = ref(true)
+
+function formatCreditUnit(value: number): string {
+  if (!Number.isFinite(value)) return '0'
+  return value.toFixed(8).replace(/0+$/, '').replace(/\.$/, '')
+}
 
 function subscriptionHasPeakRate(subscription: UserSubscription): boolean {
   return hasPeakRate(subscription.group)

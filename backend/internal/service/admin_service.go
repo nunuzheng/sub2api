@@ -57,6 +57,8 @@ type AdminService interface {
 	PreviewCompositeRoute(ctx context.Context, groupID int64, input CompositeRoutePreviewRequest) (*CompositeRouteDecision, error)
 	GetGroupAPIKeys(ctx context.Context, groupID int64, page, pageSize int) ([]APIKey, int64, error)
 	GetGroupRateMultipliers(ctx context.Context, groupID int64) ([]UserGroupRateEntry, error)
+	GetGroupCreditPrices(ctx context.Context, groupID int64) ([]UserGroupCreditPriceEntry, error)
+	ReplaceGroupCreditPrices(ctx context.Context, groupID int64, entries []GroupCreditPriceInput) error
 	ClearGroupRateMultipliers(ctx context.Context, groupID int64) error
 	BatchSetGroupRateMultipliers(ctx context.Context, groupID int64, entries []GroupRateMultiplierInput) error
 	ClearGroupRPMOverrides(ctx context.Context, groupID int64) error
@@ -233,11 +235,13 @@ type AdminBoundAuthIdentityChannel struct {
 }
 
 type CreateGroupInput struct {
-	Name                      string
-	Description               string
-	I18n                      GroupI18n // 名称与描述的界面语言译文
-	Platform                  string
-	RateMultiplier            float64
+	Name           string
+	Description    string
+	I18n           GroupI18n // 名称与描述的界面语言译文
+	Platform       string
+	RateMultiplier float64
+	// CreditBilling nil leaves credit billing disabled (token path).
+	CreditBilling             *GroupCreditBilling
 	IsExclusive               bool
 	SubscriptionType          string   // standard/subscription
 	DailyLimitUSD             *float64 // 日限额 (USD)
@@ -315,11 +319,13 @@ type CreateGroupInput struct {
 }
 
 type UpdateGroupInput struct {
-	Name                      string
-	Description               *string
-	I18n                      *GroupI18n // nil 表示不修改；非 nil 整体替换
-	Platform                  string
-	RateMultiplier            *float64 // 使用指针以支持设置为0
+	Name           string
+	Description    *string
+	I18n           *GroupI18n // nil 表示不修改；非 nil 整体替换
+	Platform       string
+	RateMultiplier *float64 // 使用指针以支持设置为0
+	// CreditBilling nil 不修改。启用后不能关闭。
+	CreditBilling             *GroupCreditBilling
 	IsExclusive               *bool
 	Status                    string
 	SubscriptionType          string   // standard/subscription

@@ -18,6 +18,7 @@ import (
 
 	"github.com/Wei-Shaw/sub2api/internal/pkg/apicompat"
 	"github.com/Wei-Shaw/sub2api/internal/pkg/logger"
+	"github.com/Wei-Shaw/sub2api/internal/pkg/upstreamcredit"
 	"github.com/Wei-Shaw/sub2api/internal/util/responseheaders"
 	"github.com/gin-gonic/gin"
 	"github.com/tidwall/gjson"
@@ -2361,6 +2362,14 @@ func (s *OpenAIGatewayService) handleNonStreamingResponsePassthrough(
 	if !usageParsed {
 		// 兜底：尝试从 SSE 文本中解析 usage
 		usage = s.parseSSEUsageFromBody(string(body))
+	}
+	// 二进制 EventStream（Kiro meteringEvent）不一定能被 JSON/SSE usage 解析看见。
+	// 只在还没有 credit 快照时补扫，避免和上面的解析重复累加。
+	if usage != nil && !usage.CreditsSeen {
+		if sum := upstreamcredit.SumMetering(body); sum > 0 {
+			usage.Credits = sum
+			usage.CreditsSeen = true
+		}
 	}
 	logOpenAISuccessMissingUsage(ctx, c, account, resp, usage, "json", false)
 

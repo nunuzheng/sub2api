@@ -20,6 +20,7 @@ type AvailableGroupRef struct {
 	Platform           string
 	SubscriptionType   string
 	RateMultiplier     float64
+	CreditBilling      GroupCreditBilling
 	PeakRateEnabled    bool
 	PeakStart          string
 	PeakEnd            string
@@ -71,6 +72,7 @@ func (s *ChannelService) ListAvailable(ctx context.Context) ([]AvailableChannel,
 			Platform:           g.Platform,
 			SubscriptionType:   g.SubscriptionType,
 			RateMultiplier:     g.RateMultiplier,
+			CreditBilling:      g.CreditBilling,
 			PeakRateEnabled:    g.PeakRateEnabled,
 			PeakStart:          g.PeakStart,
 			PeakEnd:            g.PeakEnd,

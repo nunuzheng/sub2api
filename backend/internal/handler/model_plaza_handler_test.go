@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/Wei-Shaw/sub2api/internal/config"
 	"github.com/Wei-Shaw/sub2api/internal/server/middleware"
@@ -108,7 +109,7 @@ func TestToModelPlazaGroupDTO_UserRateAndFieldWhitelist(t *testing.T) {
 	}
 
 	// 有专属倍率:user_rate_multiplier 序列化输出
-	dto := toModelPlazaGroupDTO(&g, map[int64]float64{2: 0.5})
+	dto := toModelPlazaGroupDTO(&g, map[int64]float64{2: 0.5}, nil)
 	raw, err := json.Marshal(dto)
 	require.NoError(t, err)
 	var decoded map[string]any
@@ -147,13 +148,60 @@ func TestToModelPlazaGroupDTO_UserRateAndFieldWhitelist(t *testing.T) {
 	require.False(t, hasTimePricing, "无分时时不输出 time_pricing")
 
 	// 无专属倍率:user_rate_multiplier 整个字段省略
-	dtoNoRate := toModelPlazaGroupDTO(&g, nil)
+	dtoNoRate := toModelPlazaGroupDTO(&g, nil, nil)
 	rawNoRate, err := json.Marshal(dtoNoRate)
 	require.NoError(t, err)
 	var decodedNoRate map[string]any
 	require.NoError(t, json.Unmarshal(rawNoRate, &decodedNoRate))
 	_, hasRate := decodedNoRate["user_rate_multiplier"]
 	require.False(t, hasRate, "无专属倍率时 user_rate_multiplier 应 omitempty")
+}
+
+func TestToModelPlazaGroupDTO_CreditBilling(t *testing.T) {
+	started := time.Date(2026, 10, 11, 18, 26, 36, 0, time.UTC)
+	cost := 0.075
+	g := service.PlazaGroup{
+		ID: 22, Name: "kiro", Platform: "anthropic", SubscriptionType: "standard", RateMultiplier: 1.6,
+		PeakRateEnabled: true, PeakRateMultiplier: 2,
+		CreditBilling: service.GroupCreditBilling{
+			Enabled: true, UnitPrice: 0.144, StartedAt: &started, CostPerCredit: &cost,
+		},
+		Models: []service.PlazaModel{{
+			Name: "claude-opus", Platform: "anthropic",
+			Pricing:         &service.ChannelModelPricing{BillingMode: service.BillingModeToken, InputPrice: testPtr(3e-6)},
+			OfficialPricing: &service.PlazaOfficialPricing{InputPrice: testPtr(3e-6)},
+		}},
+	}
+	dto := toModelPlazaGroupDTO(&g, nil, map[int64]float64{22: 0.2})
+	raw, err := json.Marshal(dto)
+	require.NoError(t, err)
+	var decoded map[string]any
+	require.NoError(t, json.Unmarshal(raw, &decoded))
+	cb := decoded["credit_billing"].(map[string]any)
+	require.Equal(t, true, cb["enabled"])
+	require.InDelta(t, 0.144, cb["unit_price"].(float64), 1e-9)
+	require.Contains(t, cb, "started_at")
+	_, hasCost := cb["cost_per_credit"]
+	require.False(t, hasCost, "customer plaza must not expose cost_per_credit")
+	require.InDelta(t, 0.2, decoded["user_credit_unit_price"].(float64), 1e-9)
+	_, hasRate := decoded["rate_multiplier"]
+	require.False(t, hasRate, "credit plaza group must not expose rate_multiplier")
+	_, hasUserRate := decoded["user_rate_multiplier"]
+	require.False(t, hasUserRate)
+	models := decoded["models"].([]any)
+	require.Len(t, models, 1)
+	model := models[0].(map[string]any)
+	_, hasPricing := model["pricing"]
+	_, hasOfficial := model["official_pricing"]
+	require.False(t, hasPricing)
+	require.False(t, hasOfficial)
+	require.NotContains(t, string(raw), "cost_per_credit")
+	require.NotContains(t, string(raw), "1.6")
+
+	token := toModelPlazaGroupDTO(&service.PlazaGroup{ID: 1, RateMultiplier: 1}, nil, nil)
+	rawToken, err := json.Marshal(token)
+	require.NoError(t, err)
+	require.NotContains(t, string(rawToken), "credit_billing")
 }
 
 func TestToModelPlazaOfficialPricing_NilPassthrough(t *testing.T) {
@@ -187,7 +235,7 @@ func TestToModelPlazaGroupDTO_LongContextTiersAndBasis(t *testing.T) {
 		}},
 	}
 
-	raw, err := json.Marshal(toModelPlazaGroupDTO(&g, nil))
+	raw, err := json.Marshal(toModelPlazaGroupDTO(&g, nil, nil))
 	require.NoError(t, err)
 	var decoded map[string]any
 	require.NoError(t, json.Unmarshal(raw, &decoded))
@@ -231,7 +279,7 @@ func TestToModelPlazaGroupDTO_TimePricing(t *testing.T) {
 			}},
 		}},
 	}
-	raw, err := json.Marshal(toModelPlazaGroupDTO(&g, nil))
+	raw, err := json.Marshal(toModelPlazaGroupDTO(&g, nil, nil))
 	require.NoError(t, err)
 	var decoded map[string]any
 	require.NoError(t, json.Unmarshal(raw, &decoded))

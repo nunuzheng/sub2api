@@ -57,13 +57,15 @@ type APIKeyAuthUserSnapshot struct {
 
 // APIKeyAuthGroupSnapshot 分组快照
 type APIKeyAuthGroupSnapshot struct {
-	ID                              int64                         `json:"id"`
-	Name                            string                        `json:"name"`
-	Platform                        string                        `json:"platform"`
-	IsExclusive                     bool                          `json:"is_exclusive"`
-	Status                          string                        `json:"status"`
-	SubscriptionType                string                        `json:"subscription_type"`
-	RateMultiplier                  float64                       `json:"rate_multiplier"`
+	ID               int64   `json:"id"`
+	Name             string  `json:"name"`
+	Platform         string  `json:"platform"`
+	IsExclusive      bool    `json:"is_exclusive"`
+	Status           string  `json:"status"`
+	SubscriptionType string  `json:"subscription_type"`
+	RateMultiplier   float64 `json:"rate_multiplier"`
+	// CreditBilling 必须随认证快照缓存，否则 credit 分组会按 token 价表扣费。
+	CreditBilling                   GroupCreditBilling            `json:"credit_billing,omitempty"`
 	DailyLimitUSD                   *float64                      `json:"daily_limit_usd,omitempty"`
 	WeeklyLimitUSD                  *float64                      `json:"weekly_limit_usd,omitempty"`
 	MonthlyLimitUSD                 *float64                      `json:"monthly_limit_usd,omitempty"`

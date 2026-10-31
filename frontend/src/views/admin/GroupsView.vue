@@ -261,10 +261,11 @@
             </div>
           </template>
 
-          <template #cell-rate_multiplier="{ value }">
-            <span class="text-sm text-gray-700 dark:text-gray-300"
-              >{{ value }}x</span
-            >
+          <template #cell-rate_multiplier="{ row }">
+            <span class="text-sm text-gray-700 dark:text-gray-300">
+              <template v-if="row.credit_billing?.enabled">${{ formatCreditUnitPrice(row.credit_billing.unit_price) }}/credit</template>
+              <template v-else>{{ row.rate_multiplier }}x</template>
+            </span>
           </template>
 
           <template #cell-is_exclusive="{ value }">
@@ -421,7 +422,16 @@
                 }}</span>
               </button>
               <button
-                v-if="!authStore.isSimpleMode"
+                v-if="!authStore.isSimpleMode && row.credit_billing?.enabled"
+                data-testid="group-credit-prices"
+                @click="handleCreditPrices(row)"
+                class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-purple-600 dark:hover:bg-dark-700 dark:hover:text-purple-400"
+              >
+                <Icon name="dollar" size="sm" />
+                <span class="text-xs">{{ t("admin.groups.form.creditPrices") }}</span>
+              </button>
+              <button
+                v-else-if="!authStore.isSimpleMode"
                 data-testid="group-rate-multipliers"
                 @click="handleRateMultipliers(row)"
                 class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-purple-600 dark:hover:bg-dark-700 dark:hover:text-purple-400"
@@ -625,6 +635,26 @@
             data-tour="group-form-multiplier"
           />
           <p class="input-hint">{{ t("admin.groups.rateMultiplierHint") }}</p>
+        </div>
+        <div>
+          <label class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+            <input v-model="createForm.credit_enabled" type="checkbox" />
+            {{ t("admin.groups.form.creditEnable") }}
+          </label>
+          <p class="input-hint">{{ t("admin.groups.form.creditEnableHint") }}</p>
+        </div>
+        <div v-if="createForm.credit_enabled">
+          <label class="input-label">{{ t("admin.groups.form.creditUnitPrice") }}</label>
+          <input
+            v-model.number="createForm.credit_unit_price"
+            data-testid="group-credit-unit-price"
+            type="number"
+            step="0.00000001"
+            min="0.00000001"
+            max="1000"
+            class="input"
+          />
+          <p class="input-hint">{{ t("admin.groups.form.creditUnitPriceHint") }}</p>
         </div>
         <div>
           <label class="input-label">{{ t("admin.groups.form.rpmLimit") }}</label>
@@ -2278,6 +2308,33 @@
             data-tour="group-form-multiplier"
           />
         </div>
+        <div v-if="!authStore.isSimpleMode && !editForm.credit_enabled">
+          <label class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+            <input v-model="editForm.credit_enabled" type="checkbox" />
+            {{ t("admin.groups.form.creditEnable") }}
+          </label>
+          <p class="input-hint">{{ t("admin.groups.form.creditEnableHint") }}</p>
+        </div>
+        <div v-if="!authStore.isSimpleMode && editForm.credit_enabled">
+          <label class="input-label">{{ t("admin.groups.form.creditUnitPrice") }}</label>
+          <input
+            v-model.number="editForm.credit_unit_price"
+            data-testid="group-credit-unit-price"
+            type="number"
+            step="0.00000001"
+            min="0.00000001"
+            max="1000"
+            class="input"
+          />
+          <p class="input-hint">
+            {{
+              t("admin.groups.form.creditKeepPrice", {
+                price: formatCreditUnitPrice(editForm.credit_unit_price),
+                started: editForm.credit_started_at || "—",
+              })
+            }}
+          </p>
+        </div>
         <div>
           <label class="input-label">{{ t("admin.groups.form.rpmLimit") }}</label>
           <input
@@ -3154,7 +3211,7 @@
         />
 
 
-        <div class="border-t border-gray-200 pt-4 mt-4 dark:border-dark-400">
+        <div v-if="!editForm.credit_enabled" class="border-t border-gray-200 pt-4 mt-4 dark:border-dark-400">
           <div class="flex flex-wrap items-start justify-between gap-3">
             <div class="min-w-0 flex-1">
               <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ t("admin.groups.modelPricing.title") }}</h4>
@@ -4275,6 +4332,11 @@
     </BaseDialog>
 
     <!-- Group Rate Multipliers Modal -->
+    <GroupCreditPricesModal
+      :show="showCreditPricesModal"
+      :group="creditPricesGroup"
+      @close="showCreditPricesModal = false"
+    />
     <GroupRateMultipliersModal
       :show="showRateMultipliersModal"
       :group="rateMultipliersGroup"
@@ -4330,6 +4392,7 @@ import { platformLabel } from "@/utils/platformColors";
 import Icon from "@/components/icons/Icon.vue";
 import GroupI18nField from "@/components/admin/group/GroupI18nField.vue";
 import GroupRateMultipliersModal from "@/components/admin/group/GroupRateMultipliersModal.vue";
+import GroupCreditPricesModal from "@/components/admin/group/GroupCreditPricesModal.vue";
 import GroupRPMOverridesModal from "@/components/admin/group/GroupRPMOverridesModal.vue";
 import GroupCapacityBadge from "@/components/common/GroupCapacityBadge.vue";
 import ReasoningEffortPolicyFields from "@/components/admin/group/ReasoningEffortPolicyFields.vue";
@@ -4871,6 +4934,8 @@ const editingGroup = ref<AdminGroup | null>(null);
 const deletingGroup = ref<AdminGroup | null>(null);
 const duplicatingGroupIds = reactive(new Set<number>());
 const showRateMultipliersModal = ref(false);
+const showCreditPricesModal = ref(false);
+const creditPricesGroup = ref<AdminGroup | null>(null);
 const rateMultipliersGroup = ref<AdminGroup | null>(null);
 const showRPMOverridesModal = ref(false);
 const rpmOverridesGroup = ref<AdminGroup | null>(null);
@@ -4975,6 +5040,9 @@ const createForm = reactive({
   i18n: {} as GroupI18n,
   platform: "anthropic" as GroupPlatform,
   rate_multiplier: 1.0,
+  credit_enabled: false,
+  credit_unit_price: null as number | null,
+  credit_started_at: "",
   is_exclusive: false,
   subscription_type: "standard" as SubscriptionType,
   daily_limit_usd: null as number | null,
@@ -5341,6 +5409,9 @@ const editForm = reactive({
   i18n: {} as GroupI18n,
   platform: "anthropic" as GroupPlatform,
   rate_multiplier: 1.0,
+  credit_enabled: false,
+  credit_unit_price: null as number | null,
+  credit_started_at: "",
   is_exclusive: false,
   status: "active" as "active" | "inactive",
   subscription_type: "standard" as SubscriptionType,
@@ -5818,6 +5889,9 @@ const closeCreateModal = () => {
   createForm.i18n = {};
   createForm.platform = "anthropic";
   createForm.rate_multiplier = 1.0;
+  createForm.credit_enabled = false;
+  createForm.credit_unit_price = null;
+  createForm.credit_started_at = "";
   createForm.is_exclusive = false;
   createForm.subscription_type = "standard";
   createForm.daily_limit_usd = null;
@@ -5891,6 +5965,12 @@ const normalizeOptionalLimit = (
   }
 
   return Number.isFinite(value) && value > 0 ? value : null;
+};
+
+const formatCreditUnitPrice = (value: number | null | undefined) => {
+  const price = Number(value);
+  if (!Number.isFinite(price)) return "0";
+  return price.toFixed(8).replace(/0+$/, "").replace(/\.$/, "");
 };
 
 const normalizeRateMultiplier = (
@@ -6068,6 +6148,20 @@ const handleCreateGroup = async () => {
     requestData.peak_rate_multiplier = normalizeRateMultiplier(
       createForm.peak_rate_multiplier,
     );
+    if (createForm.credit_enabled) {
+      const price = Number(createForm.credit_unit_price);
+      if (!Number.isFinite(price) || price < 1e-8 || price > 1000) {
+        appStore.showError(t("admin.groups.form.creditUnitPriceHint"));
+        submitting.value = false;
+        return;
+      }
+      requestData.credit_billing = { enabled: true, unit_price: price };
+    } else {
+      delete (requestData as Record<string, unknown>).credit_billing;
+    }
+    delete (requestData as Record<string, unknown>).credit_enabled;
+    delete (requestData as Record<string, unknown>).credit_unit_price;
+    delete (requestData as Record<string, unknown>).credit_started_at;
     const payload = authStore.isSimpleMode
       ? {
           name: createForm.name,
@@ -6107,6 +6201,11 @@ const handleEdit = async (group: AdminGroup) => {
   );
   editForm.platform = group.platform;
   editForm.rate_multiplier = group.rate_multiplier;
+  editForm.credit_enabled = group.credit_billing?.enabled === true;
+  editForm.credit_unit_price = group.credit_billing?.unit_price ?? null;
+  editForm.credit_started_at = group.credit_billing?.started_at
+    ? new Date(group.credit_billing.started_at).toLocaleString()
+    : "";
   editForm.is_exclusive = group.is_exclusive;
   editForm.status = group.status;
   editForm.subscription_type = group.subscription_type || "standard";
@@ -6427,6 +6526,24 @@ const handleUpdateGroup = async () => {
     payload.peak_rate_multiplier = normalizeRateMultiplier(
       editForm.peak_rate_multiplier,
     );
+    const creditPrice = Number(editForm.credit_unit_price);
+    if (editForm.credit_enabled) {
+      if (!Number.isFinite(creditPrice) || creditPrice < 1e-8 || creditPrice > 1000) {
+        appStore.showError(t("admin.groups.form.creditUnitPriceHint"));
+        submitting.value = false;
+        return;
+      }
+      payload.credit_billing = {
+        enabled: true,
+        unit_price: creditPrice,
+        ...(editingGroup.value?.credit_billing?.cost_per_credit != null
+          ? { cost_per_credit: editingGroup.value.credit_billing.cost_per_credit }
+          : {}),
+      };
+    }
+    delete (payload as Record<string, unknown>).credit_enabled;
+    delete (payload as Record<string, unknown>).credit_unit_price;
+    delete (payload as Record<string, unknown>).credit_started_at;
     const requestData = authStore.isSimpleMode
       ? {
           name: editForm.name,
@@ -6470,6 +6587,11 @@ const removeEditMessagesDispatchMapping = (row: MessagesDispatchMappingRow) => {
   if (index !== -1) {
     editForm.exact_model_mappings.splice(index, 1);
   }
+};
+
+const handleCreditPrices = (group: AdminGroup) => {
+  creditPricesGroup.value = group;
+  showCreditPricesModal.value = true;
 };
 
 const handleRateMultipliers = (group: AdminGroup) => {

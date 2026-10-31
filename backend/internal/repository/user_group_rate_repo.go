@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"time"
 
 	"github.com/Wei-Shaw/sub2api/internal/service"
@@ -397,4 +398,84 @@ func (r *userGroupRateRepository) DeleteByGroupID(ctx context.Context, groupID i
 func (r *userGroupRateRepository) DeleteByUserID(ctx context.Context, userID int64) error {
 	_, err := r.sql.ExecContext(ctx, `DELETE FROM user_group_rate_multipliers WHERE user_id = $1`, userID)
 	return err
+}
+
+func (r *userGroupRateRepository) GetCreditUnitPrice(ctx context.Context, userID, groupID int64) (*float64, error) {
+	rows, err := r.sql.QueryContext(ctx, `
+		SELECT credit_unit_price FROM user_group_credit_prices
+		WHERE user_id = $1 AND group_id = $2
+	`, userID, groupID)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = rows.Close() }()
+	if !rows.Next() {
+		return nil, rows.Err()
+	}
+	var price float64
+	if err := rows.Scan(&price); err != nil {
+		return nil, err
+	}
+	return &price, nil
+}
+
+func (r *userGroupRateRepository) ListCreditUnitPricesByUser(ctx context.Context, userID int64) (map[int64]float64, error) {
+	rows, err := r.sql.QueryContext(ctx, `
+		SELECT group_id, credit_unit_price FROM user_group_credit_prices WHERE user_id = $1
+	`, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = rows.Close() }()
+	out := map[int64]float64{}
+	for rows.Next() {
+		var groupID int64
+		var price float64
+		if err := rows.Scan(&groupID, &price); err != nil {
+			return nil, err
+		}
+		out[groupID] = price
+	}
+	return out, rows.Err()
+}
+
+func (r *userGroupRateRepository) ListCreditUnitPrices(ctx context.Context, groupID int64) ([]service.UserGroupCreditPriceEntry, error) {
+	rows, err := r.sql.QueryContext(ctx, `
+		SELECT p.user_id, COALESCE(u.username, ''), COALESCE(u.email, ''), p.credit_unit_price
+		FROM user_group_credit_prices p
+		LEFT JOIN users u ON u.id = p.user_id
+		WHERE p.group_id = $1
+		ORDER BY p.user_id
+	`, groupID)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = rows.Close() }()
+	var out []service.UserGroupCreditPriceEntry
+	for rows.Next() {
+		var entry service.UserGroupCreditPriceEntry
+		if err := rows.Scan(&entry.UserID, &entry.UserName, &entry.UserEmail, &entry.CreditUnitPrice); err != nil {
+			return nil, err
+		}
+		out = append(out, entry)
+	}
+	return out, rows.Err()
+}
+
+func (r *userGroupRateRepository) ReplaceCreditUnitPrices(ctx context.Context, groupID int64, entries []service.GroupCreditPriceInput) error {
+	if _, err := r.sql.ExecContext(ctx, `DELETE FROM user_group_credit_prices WHERE group_id = $1`, groupID); err != nil {
+		return err
+	}
+	for _, entry := range entries {
+		if entry.UserID <= 0 || !service.ValidCreditUnitPrice(entry.CreditUnitPrice) {
+			return fmt.Errorf("invalid credit price for user %d", entry.UserID)
+		}
+		if _, err := r.sql.ExecContext(ctx, `
+			INSERT INTO user_group_credit_prices (user_id, group_id, credit_unit_price)
+			VALUES ($1, $2, $3)
+		`, entry.UserID, groupID, entry.CreditUnitPrice); err != nil {
+			return err
+		}
+	}
+	return nil
 }

@@ -11,6 +11,8 @@
           :platform="group.platform as GroupPlatform"
           :subscription-type="(group.subscription_type || 'standard') as SubscriptionType"
           :rate-multiplier="group.rate_multiplier"
+          :credit-unit-price="creditUnitPrice"
+          :credit-custom="group.user_credit_unit_price != null"
           :user-rate-multiplier="group.user_rate_multiplier ?? null"
           :peak-rate-enabled="group.peak_rate_enabled"
           :peak-start="group.peak_start"
@@ -35,15 +37,21 @@
       <p v-if="group.description" class="mt-2 text-sm text-gray-500 dark:text-dark-400">
         {{ group.description }}
       </p>
+      <p v-if="creditUnitPrice != null" class="mt-2 text-sm font-medium text-emerald-700 dark:text-emerald-300">
+        {{ t('modelPlaza.detail.creditBanner', { price: formatCreditUnit(creditUnitPrice) }) }}
+      </p>
+      <p v-if="creditUnitPrice != null" class="mt-1 text-xs text-gray-500 dark:text-dark-400">
+        {{ t('modelPlaza.detail.creditFormula') }}
+      </p>
       <p
-        v-if="peakNote"
+        v-if="peakNote && creditUnitPrice == null"
         class="mt-1.5 inline-flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400"
       >
         <Icon name="clock" size="xs" class="h-3 w-3" />
         {{ peakNote }}
       </p>
       <p
-        v-if="longContextNote"
+        v-if="longContextNote && creditUnitPrice == null"
         class="mt-1.5 flex items-center gap-1 text-xs text-gray-500 dark:text-dark-400"
       >
         <Icon name="infoCircle" size="xs" class="h-3 w-3" />
@@ -53,8 +61,22 @@
 
     <!-- 模型价格表:整行(含 hover 底色/分区底色)顶到卡片边缘,左右留白由表格首列/末列的 padding 提供 -->
     <div>
+      <table v-if="creditUnitPrice != null && group.models.length > 0" class="w-full text-sm">
+        <thead>
+          <tr class="text-left text-xs uppercase tracking-wider text-gray-500">
+            <th class="px-5 py-2">{{ t('modelPlaza.table.model') }}</th>
+            <th class="px-5 py-2 text-right">{{ t('modelPlaza.detail.creditColumn') }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="model in group.models" :key="model.name" class="border-t border-gray-100 dark:border-dark-700">
+            <td class="px-5 py-2">{{ model.name }}</td>
+            <td class="px-5 py-2 text-right">${{ formatCreditUnit(creditUnitPrice) }} / credit</td>
+          </tr>
+        </tbody>
+      </table>
       <PlazaModelPricingTable
-        v-if="group.models.length > 0"
+        v-else-if="group.models.length > 0"
         :models="group.models"
         :platform="group.platform"
         :rate-multiplier="group.rate_multiplier"
@@ -93,6 +115,13 @@ const { t } = useI18n()
 const appStore = useAppStore()
 
 /** 高峰窗口描述(含倍率与服务器时区标注);分组未启用高峰为空串。 */
+const creditUnitPrice = computed(() => {
+  if (!props.group.credit_billing?.enabled) return null
+  return props.group.user_credit_unit_price ?? props.group.credit_billing.unit_price
+})
+
+const formatCreditUnit = (value: number) => value.toFixed(8).replace(/0+$/, '').replace(/\.$/, '')
+
 const peakWindow = computed(() => {
   if (!hasPeakRate(props.group)) return ''
   return formatPeakRateWindow(
