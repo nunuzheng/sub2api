@@ -55,6 +55,46 @@ func TestGatewayService_StreamingReusesScannerBufferAndStillParsesUsage(t *testi
 	require.Equal(t, 7, result.usage.OutputTokens)
 }
 
+func TestHandleStreamingResponse_ProviderUsageCreditsSeen(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	svc := newStreamingResponseTestGatewayService()
+
+	rec := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(rec)
+	c.Request = httptest.NewRequest(http.MethodPost, "/v1/messages", nil)
+
+	const credits = 0.004377138706467661
+	pr, pw := io.Pipe()
+	resp := &http.Response{StatusCode: http.StatusOK, Header: http.Header{}, Body: pr}
+
+	go func() {
+		defer func() { _ = pw.Close() }()
+		_, _ = pw.Write([]byte("data: {\"type\":\"message_start\",\"message\":{\"usage\":{\"input_tokens\":10}}}\n\n"))
+		_, _ = pw.Write([]byte("data: {\"type\":\"message_delta\",\"usage\":{\"output_tokens\":78},\"provider_usage\":{\"provider\":\"kiro\",\"credits\":0.004377138706467661}}\n\n"))
+		_, _ = pw.Write([]byte("data: [DONE]\n\n"))
+	}()
+
+	account := &Account{ID: 1, Platform: PlatformAnthropic, Type: AccountTypeAPIKey}
+	result, err := svc.handleStreamingResponse(context.Background(), resp, c, account, time.Now(), "claude-haiku-4-5", "claude-haiku-4-5", false)
+	_ = pr.Close()
+	require.NoError(t, err)
+	require.NotNil(t, result)
+	require.NotNil(t, result.usage)
+	require.False(t, account.IsAnthropicAPIKeyPassthroughEnabled())
+	require.Equal(t, 10, result.usage.InputTokens)
+	require.Equal(t, 78, result.usage.OutputTokens)
+	require.True(t, result.usage.CreditsSeen)
+	require.InDelta(t, credits, result.usage.Credits, 1e-12)
+
+	const unitPrice = 0.13
+	group := &Group{ID: 2, CreditBilling: GroupCreditBilling{Enabled: true, UnitPrice: unitPrice}}
+	cost := creditBillingCost(group, unitPrice, result.usage.Credits, result.usage.CreditsSeen)
+	require.NotNil(t, cost)
+	require.Equal(t, BillingModeKiroCredit, cost.BillingMode)
+	require.InDelta(t, QuantizeUsageBillingAmount(credits*unitPrice), cost.ActualCost, 1e-12)
+	require.NotZero(t, cost.ActualCost)
+}
+
 func TestGatewayService_StreamingKeepaliveUsesIdleTimer(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	svc := newStreamingResponseTestGatewayService()
