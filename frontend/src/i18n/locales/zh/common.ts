@@ -214,6 +214,13 @@ export default {
     contentModeration: '内容审计',
     promptAudit: '提示词审计',
     auditLogs: '操作日志',
+    overview: '概览',
+    balance: '余额与充值',
+    adminMenu: '管理',
+    accountMenu: '账户',
+    primary: '主导航',
+    openNavigation: '打开导航',
+    closeNavigation: '关闭导航',
   },
 
   // Auth

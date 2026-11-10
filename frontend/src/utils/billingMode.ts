@@ -41,8 +41,9 @@ export function isImageUsage(row: Pick<ImageBillingRow, 'image_count' | 'billing
 }
 
 export function getDisplayBillingMode(row: Pick<ImageBillingRow, 'billing_mode' | 'image_count'> | null | undefined): string | null | undefined {
+  if (!row) return undefined
   // Explicit video/token modes always win over image_count heuristics.
-  if (row?.billing_mode === BILLING_MODE_VIDEO || row?.billing_mode === BILLING_MODE_TOKEN || isKiroCreditMode(row?.billing_mode)) {
+  if (row.billing_mode === BILLING_MODE_VIDEO || row.billing_mode === BILLING_MODE_TOKEN || isKiroCreditMode(row.billing_mode)) {
     return row.billing_mode
   }
   if ((row?.image_count ?? 0) > 0 && !row?.billing_mode) {

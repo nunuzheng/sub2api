@@ -214,6 +214,13 @@ export default {
     contentModeration: 'Content Moderation',
     promptAudit: 'Prompt Audit',
     auditLogs: 'Audit Logs',
+    overview: 'Overview',
+    balance: 'Balance',
+    adminMenu: 'Admin',
+    accountMenu: 'Account',
+    primary: 'Primary',
+    openNavigation: 'Open navigation',
+    closeNavigation: 'Close navigation',
   },
 
   // Auth

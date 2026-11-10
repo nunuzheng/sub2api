@@ -7,17 +7,17 @@ export default {
       colors: {
         // 主色调 - Teal/Cyan 青色系
         primary: {
-          50: '#f0fdfa',
-          100: '#ccfbf1',
-          200: '#99f6e4',
-          300: '#5eead4',
-          400: '#2dd4bf',
-          500: '#14b8a6',
-          600: '#0d9488',
-          700: '#0f766e',
-          800: '#115e59',
-          900: '#134e4a',
-          950: '#042f2e'
+          50: '#f3f6ff',
+          100: '#e7edff',
+          200: '#cddbff',
+          300: '#a8c0ff',
+          400: '#6b93ff',
+          500: '#356bff',
+          600: '#2457e6',
+          700: '#1d45c4',
+          800: '#1c3a9e',
+          900: '#1c357c',
+          950: '#121f4a'
         },
         // 辅助色 - 深蓝灰
         accent: {
@@ -67,8 +67,8 @@ export default {
       boxShadow: {
         glass: '0 8px 32px rgba(0, 0, 0, 0.08)',
         'glass-sm': '0 4px 16px rgba(0, 0, 0, 0.06)',
-        glow: '0 0 20px rgba(20, 184, 166, 0.25)',
-        'glow-lg': '0 0 40px rgba(20, 184, 166, 0.35)',
+        glow: 'none',
+        'glow-lg': 'none',
         card: '0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06)',
         'card-hover': '0 10px 40px rgba(0, 0, 0, 0.08)',
         'inner-glow': 'inset 0 1px 0 rgba(255, 255, 255, 0.1)'

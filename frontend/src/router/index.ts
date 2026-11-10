@@ -247,10 +247,15 @@ const routes: RouteRecordRaw[] = [
     meta: {
       requiresAuth: true,
       requiresAdmin: false,
-      title: 'Redeem Code',
+      title: 'Balance',
       titleKey: 'redeem.title',
       descriptionKey: 'redeem.description'
     }
+  },
+  // One-way alias. /redeem does not redirect back here.
+  {
+    path: '/balance',
+    redirect: '/redeem'
   },
   {
     path: '/affiliate',

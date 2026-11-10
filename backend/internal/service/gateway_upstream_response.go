@@ -1112,6 +1112,9 @@ func (s *GatewayService) handleStreamingResponse(ctx context.Context, resp *http
 						if usagePatch != nil {
 							mergeSSEUsagePatch(usage, usagePatch)
 						}
+						if data != "[DONE]" {
+							absorbClaudeCredits(usage, []byte(data))
+						}
 					}
 				}
 				continue
@@ -1163,18 +1166,19 @@ func (s *GatewayService) handleStreamingResponse(ctx context.Context, resp *http
 }
 
 func (s *GatewayService) parseSSEUsage(data string, usage *ClaudeUsage) {
-	if usage == nil {
+	if usage == nil || data == "" || data == "[DONE]" {
 		return
 	}
 
 	var event map[string]any
-	if err := json.Unmarshal([]byte(data), &event); err != nil {
-		return
+	if err := json.Unmarshal([]byte(data), &event); err == nil {
+		if patch := s.extractSSEUsagePatch(event); patch != nil {
+			mergeSSEUsagePatch(usage, patch)
+		}
 	}
-
-	if patch := s.extractSSEUsagePatch(event); patch != nil {
-		mergeSSEUsagePatch(usage, patch)
-	}
+	// Credit groups bill provider_usage.credits even when this event has no
+	// token usage patch. The streaming loop applies the same absorb.
+	absorbClaudeCredits(usage, []byte(data))
 }
 
 type sseUsagePatch struct {
@@ -1451,6 +1455,11 @@ func (s *GatewayService) handleNonStreamingResponse(ctx context.Context, resp *h
 			}
 		}
 	}
+
+	// JSON unmarshal only fills token usage. SuperGPT/Kiro credits live on
+	// provider_usage and must be absorbed here; this path does not require
+	// anthropic_passthrough.
+	absorbClaudeCredits(&response.Usage, body)
 
 	// 如果有模型映射，替换响应中的model字段
 	if originalModel != mappedModel {

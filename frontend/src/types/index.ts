@@ -508,7 +508,6 @@ export interface Toast {
 }
 
 export interface AppState {
-  sidebarCollapsed: boolean
   loading: boolean
   toasts: Toast[]
 }
@@ -815,6 +814,12 @@ export interface CreateGroupRequest {
   i18n?: GroupI18n
   platform?: GroupPlatform
   rate_multiplier?: number
+  credit_billing?: {
+    enabled: boolean
+    unit_price: number
+    started_at?: string
+    cost_per_credit?: number
+  } | null
   is_exclusive?: boolean
   subscription_type?: SubscriptionType
   daily_limit_usd?: number | null
@@ -882,6 +887,12 @@ export interface UpdateGroupRequest {
   i18n?: GroupI18n
   platform?: GroupPlatform
   rate_multiplier?: number
+  credit_billing?: {
+    enabled: boolean
+    unit_price: number
+    started_at?: string
+    cost_per_credit?: number
+  } | null
   is_exclusive?: boolean
   status?: 'active' | 'inactive'
   subscription_type?: SubscriptionType

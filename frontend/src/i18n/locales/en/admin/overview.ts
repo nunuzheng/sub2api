@@ -930,6 +930,7 @@ export default {
         creditUnitPriceHint: 'Range $0.00000001–$1000. Past bills keep the price used at the time.',
         creditStartedAt: 'Enabled at',
         creditKeepPrice: 'Charged by upstream credits; ${price}/credit. Enabled at: {started}. Past bills keep their original price.',
+        creditPrice: 'Credit price',
         creditPrices: 'User prices',
         creditPricesEmpty: 'No user prices yet. Everyone uses the group price.',
         rpmLimit: 'Requests Per Minute (RPM)',
