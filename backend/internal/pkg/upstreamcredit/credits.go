@@ -6,7 +6,9 @@
 // dollar amount. Official Kiro CLI aggregates repeated credit events in one
 // response by summing them. An explicit numeric usage.credits (or credits_used)
 // field is a snapshot of the same quantity and wins over metering events in
-// the same body so the two are not added together.
+// the same body so the two are not added together. SuperGPT's Anthropic
+// passthrough puts that snapshot on provider_usage.credits (provider=kiro)
+// instead of usage.credits.
 package upstreamcredit
 
 import (
@@ -68,6 +70,10 @@ func ExplicitSnapshot(body []byte) (float64, bool) {
 		"data.usage.credits",
 		"credits_used",
 		"consumed_credits",
+		// SuperGPT/Kiro Anthropic passthrough. message.provider_usage is the
+		// same field nested inside a message_start SSE event.
+		"provider_usage.credits",
+		"message.provider_usage.credits",
 	} {
 		if value, ok := numericResult(gjson.GetBytes(body, path)); ok {
 			return value, true

@@ -125,6 +125,19 @@ func TestParseSSEUsage_EmptyString(t *testing.T) {
 	require.Equal(t, 0, usage.InputTokens)
 }
 
+func TestParseSSEUsage_ProviderUsageCredits(t *testing.T) {
+	svc := newMinimalGatewayService()
+	usage := &ClaudeUsage{}
+
+	svc.parseSSEUsage(`{"type":"message_start","message":{"usage":{"input_tokens":10},"provider_usage":{"provider":"kiro","credits":0.004377138706467661}}}`, usage)
+	svc.parseSSEUsage(`{"type":"message_delta","usage":{"output_tokens":78}}`, usage)
+
+	require.Equal(t, 10, usage.InputTokens)
+	require.Equal(t, 78, usage.OutputTokens)
+	require.True(t, usage.CreditsSeen)
+	require.InDelta(t, 0.004377138706467661, usage.Credits, 1e-12)
+}
+
 func TestParseSSEUsage_DoneEvent(t *testing.T) {
 	svc := newMinimalGatewayService()
 	usage := &ClaudeUsage{}
