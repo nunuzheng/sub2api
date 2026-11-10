@@ -6,7 +6,7 @@ Vue 3 layout components for the Sub2API frontend, built with Composition API, Ty
 
 ### 1. AppLayout.vue
 
-Main application layout with sidebar and header.
+Main application layout. The console navigation is the top bar in `AppTopNav.vue`.
 
 **Usage:**
 
@@ -26,57 +26,19 @@ import { AppLayout } from '@/components/layout'
 
 **Features:**
 
-- Responsive sidebar (collapsible)
-- Fixed header at top
+- Top navigation from `AppTopNav.vue` (daily links, admin menu, account menu)
 - Main content area with slot
-- Automatically adjusts margin based on sidebar state
+- Narrow screens use the top menu button instead of a sidebar
+
+Navigation items live in `consoleNav.ts`.
 
 ---
 
-### 2. AppSidebar.vue
+### 2. AppTopNav.vue
 
-Navigation sidebar with user and admin sections.
-
-**Features:**
-
-- Logo/brand at top
-- User navigation links:
-  - Dashboard
-  - API Keys
-  - Usage
-  - Redeem
-  - Profile
-- Admin navigation links (shown only if user is admin):
-  - Admin Dashboard
-  - Users
-  - Groups
-  - Accounts
-  - Proxies
-  - Redeem Codes
-- Collapsible sidebar with toggle button
-- Active route highlighting
-- Icons using HTML entities
-- Responsive (mobile-friendly)
+Shared console header for admins and users.
 
 **Used automatically by AppLayout** - no need to import separately.
-
----
-
-### 3. AppHeader.vue
-
-Top header with user info and actions.
-
-**Features:**
-
-- Mobile menu toggle button
-- Page title (from route meta or slot)
-- User balance display (desktop only)
-- User dropdown menu with:
-  - Profile link
-  - Logout button
-- User avatar with initials
-- Click-outside handling for dropdown
-- Responsive design
 
 **Usage with custom title:**
 
@@ -168,7 +130,7 @@ const routes = [
 These components use the following Pinia stores:
 
 - **useAuthStore**: For user authentication state, role checking, and logout
-- **useAppStore**: For sidebar state management and toast notifications
+- **useAppStore**: For toast notifications and public settings
 
 Make sure these stores are properly initialized in your app.
 
@@ -211,8 +173,5 @@ You can replace these with your preferred icon library (e.g., Heroicons, Font Aw
 
 All components are fully responsive:
 
-- **AppSidebar**: Fixed positioning on desktop, hidden by default on mobile
-- **AppHeader**: Shows mobile menu toggle on small screens, hides balance display
+- **AppTopNav**: Daily links on wide screens; a top menu button below 1024px
 - **AuthLayout**: Adapts padding and card size for mobile devices
-
-The sidebar uses Tailwind's responsive breakpoints (md:) to adjust behavior.
