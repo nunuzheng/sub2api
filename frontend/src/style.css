@@ -253,7 +253,7 @@
   /* ============ 卡片样式 ============ */
   .card {
     @apply bg-white dark:bg-dark-800;
-    border-radius: 0.5rem;
+    border-radius: 0.75rem;
     border: 1px solid var(--line);
     box-shadow: none;
   }
@@ -972,13 +972,12 @@
 }
 
 .console-main {
-  padding: 1.25rem 1rem 2.5rem;
+  width: min(1120px, calc(100% - 2rem));
+  margin: 1.25rem auto 2.5rem;
 }
 
 .console-heading {
   margin-bottom: 1.25rem;
-  padding-bottom: 0.9rem;
-  border-bottom: 1px solid var(--line);
 }
 
 .console-heading-title {
@@ -1035,10 +1034,14 @@
     display: none;
   }
 
-  .console-topnav-bar,
-  .console-main {
+  .console-topnav-bar {
     padding-left: 1.75rem;
     padding-right: 1.75rem;
+  }
+
+  .console-main {
+    width: min(1120px, calc(100% - 4.5rem));
+    margin-top: 2rem;
   }
 }
 

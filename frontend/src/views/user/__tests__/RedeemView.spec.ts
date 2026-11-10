@@ -298,8 +298,10 @@ describe('RedeemView refresh after redemption', () => {
     expect(wrapper.get('[data-testid="shop-link"]').attributes('href')).toBe('https://shop.example/cards')
     expect(wrapper.get('[data-testid="shop-link"]').attributes('target')).toBe('_blank')
     expect(wrapper.find('[data-testid="online-purchase"]').exists()).toBe(false)
-    expect(wrapper.get('[data-testid="balance-figure"]').text()).not.toContain('$')
-    expect(wrapper.text()).toContain('redeem.creditParity')
+    expect(wrapper.get('[data-testid="balance-figure"]').text()).toContain('¥10.00')
+    expect(wrapper.text()).not.toContain('redeem.creditParity')
+    expect(wrapper.text()).not.toContain('redeem.concurrency')
+    expect(wrapper.text()).not.toContain('¥100')
     wrapper.unmount()
   })
 

@@ -32,7 +32,6 @@
           @click="closeAll"
         >
           <span class="tabular-nums">{{ balanceText }}</span>
-          <span v-if="creditLedger" class="console-balance-unit">{{ t('redeem.creditUnit') }}</span>
           <span v-if="frozenBalance > 0" class="console-balance-frozen tabular-nums">
             {{ t('common.frozenBalance') }} {{ frozenText }}
           </span>
@@ -254,14 +253,12 @@ const frozenBalance = computed(() => Number(user.value?.frozen_balance || 0))
 
 function formatAmount(value: number): string {
   const amount = Number.isFinite(value) ? value.toFixed(2) : '0.00'
-  return creditLedger.value ? amount : `$${amount}`
+  return creditLedger.value ? `¥${amount}` : `$${amount}`
 }
 
 const balanceText = computed(() => formatAmount(availableBalance.value))
 const frozenText = computed(() => formatAmount(frozenBalance.value))
-const balanceLabel = computed(() => (
-  creditLedger.value ? `${balanceText.value} ${t('redeem.creditUnit')}` : balanceText.value
-))
+const balanceLabel = computed(() => balanceText.value)
 
 function isCurrent(path: string): boolean {
   return route.path === path || route.path.startsWith(`${path}/`)
