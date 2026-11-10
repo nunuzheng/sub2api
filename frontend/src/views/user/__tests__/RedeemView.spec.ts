@@ -12,6 +12,14 @@ const { redeem, getHistory, refreshUser, fetchActiveSubscriptions, showError, sh
   showSuccess: vi.fn(),
 }))
 
+const appState = vi.hoisted(() => ({
+  publicSettingsLoaded: false,
+  cachedPublicSettings: null as null | {
+    payment_enabled?: boolean
+    custom_menu_items?: Array<{ label: string; url: string }>
+  },
+}))
+
 vi.mock('@/api', () => ({
   redeemAPI: { redeem, getHistory },
   authAPI: { getPublicSettings: vi.fn().mockResolvedValue({}) },
@@ -23,7 +31,13 @@ vi.mock('@/stores/subscriptions', () => ({
   useSubscriptionStore: () => ({ fetchActiveSubscriptions }),
 }))
 vi.mock('@/stores/app', () => ({
-  useAppStore: () => ({ showError, showWarning, showSuccess }),
+  useAppStore: () => ({
+    showError,
+    showWarning,
+    showSuccess,
+    get publicSettingsLoaded() { return appState.publicSettingsLoaded },
+    get cachedPublicSettings() { return appState.cachedPublicSettings },
+  }),
 }))
 vi.mock('vue-i18n', async () => {
   const actual = await vi.importActual<typeof import('vue-i18n')>('vue-i18n')
@@ -32,7 +46,7 @@ vi.mock('vue-i18n', async () => {
 
 async function submitCode() {
   const wrapper = mount(RedeemView, {
-    global: { stubs: { AppLayout: { template: '<div><slot /></div>' }, Icon: true } },
+    global: { stubs: { AppLayout: { template: '<div><slot /></div>' }, Icon: true, RouterLink: true } },
   })
   await flushPromises()
   await wrapper.get('input#code').setValue(' REDEEM-CODE ')
@@ -43,6 +57,8 @@ async function submitCode() {
 
 describe('RedeemView refresh after redemption', () => {
   beforeEach(() => {
+    appState.publicSettingsLoaded = false
+    appState.cachedPublicSettings = null
     vi.clearAllMocks()
     redeem.mockResolvedValue({ type: 'balance', value: 20, message: 'Code applied' })
     getHistory.mockResolvedValue({ items: [], total: 0 })
@@ -87,7 +103,7 @@ describe('RedeemView refresh after redemption', () => {
   it('pages on the server, changes size, and resets page and total after redeeming', async () => {
     getHistory.mockResolvedValue({ items: [], total: 101 })
     const wrapper = mount(RedeemView, {
-      global: { stubs: { AppLayout: { template: '<div><slot /></div>' }, Icon: true } },
+      global: { stubs: { AppLayout: { template: '<div><slot /></div>' }, Icon: true, RouterLink: true } },
     })
     await flushPromises()
     const button = (text: string) => wrapper.findAll('button').find(b => b.text() === text)!
@@ -123,7 +139,7 @@ describe('RedeemView refresh after redemption', () => {
     const item = { id: 1, code: 'OLD-ROWS', type: 'balance', value: 20, used_at: '2026-03-08T00:00:00Z' }
     getHistory.mockResolvedValue({ items: [item], total: 61 })
     const wrapper = mount(RedeemView, {
-      global: { stubs: { AppLayout: { template: '<div><slot /></div>' }, Icon: true } },
+      global: { stubs: { AppLayout: { template: '<div><slot /></div>' }, Icon: true, RouterLink: true } },
     })
     await flushPromises()
     const button = (text: string) => wrapper.findAll('button').find(b => b.text() === text)!
@@ -161,7 +177,7 @@ describe('RedeemView refresh after redemption', () => {
       rejectOld = reject
     }))
     const wrapper = mount(RedeemView, {
-      global: { stubs: { AppLayout: { template: '<div><slot /></div>' }, Icon: true } },
+      global: { stubs: { AppLayout: { template: '<div><slot /></div>' }, Icon: true, RouterLink: true } },
     })
     getHistory.mockResolvedValue({ items: [{
       id: 2, code: 'NEW-ROWS', type: 'balance', value: 30, used_at: '2026-03-08T00:00:00Z',
@@ -236,6 +252,73 @@ describe('RedeemView refresh after redemption', () => {
     expect(getHistory).toHaveBeenCalledOnce()
     expect(showSuccess).not.toHaveBeenCalled()
     expect(showWarning).not.toHaveBeenCalled()
+    expect(wrapper.get('[data-testid="balance-figure"]').text()).toContain('$10.00')
+    wrapper.unmount()
+  })
+
+  it('refreshes the displayed balance from the profile response and ignores a second submit while pending', async () => {
+    let release!: (value: unknown) => void
+    redeem.mockImplementation(() => new Promise((resolve) => { release = resolve }))
+    const wrapper = mount(RedeemView, {
+      global: { stubs: { AppLayout: { template: '<div><slot /></div>' }, Icon: true, RouterLink: true } },
+    })
+    await flushPromises()
+    expect(wrapper.get('[data-testid="balance-figure"]').text()).toContain('$10.00')
+    await wrapper.get('input#code').setValue('ONCE')
+    const pending = wrapper.get('form').trigger('submit')
+    await Promise.resolve()
+    await wrapper.get('form').trigger('submit')
+    expect(redeem).toHaveBeenCalledTimes(1)
+    expect(wrapper.get('button[type="submit"]').attributes('aria-busy')).toBe('true')
+    release({ type: 'balance', value: 20, message: 'Code applied', new_balance: 30 })
+    await pending
+    await flushPromises()
+    expect(refreshUser).toHaveBeenCalledOnce()
+    expect(wrapper.get('[data-testid="balance-figure"]').text()).toContain('$30.00')
+    expect(wrapper.get('[data-testid="redeem-success"]').text()).toContain('Code applied')
+    expect(wrapper.find('[data-testid="card-shop"]').exists()).toBe(false)
+    wrapper.unmount()
+  })
+
+  it('shows only the two card tiers and the shop link when payment is off', async () => {
+    appState.publicSettingsLoaded = true
+    appState.cachedPublicSettings = {
+      payment_enabled: false,
+      custom_menu_items: [{ label: '链动小铺', url: 'https://shop.example/cards' }],
+    }
+    const wrapper = mount(RedeemView, {
+      global: { stubs: { AppLayout: { template: '<div><slot /></div>' }, Icon: true, RouterLink: true } },
+    })
+    await flushPromises()
+    const shop = wrapper.get('[data-testid="card-shop"]')
+    expect(shop.text()).toContain('¥10')
+    expect(shop.text()).toContain('¥50')
+    expect(shop.text()).not.toContain('¥20')
+    expect(shop.text()).not.toContain('¥100')
+    expect(wrapper.get('[data-testid="shop-link"]').attributes('href')).toBe('https://shop.example/cards')
+    expect(wrapper.get('[data-testid="shop-link"]').attributes('target')).toBe('_blank')
+    expect(wrapper.find('[data-testid="online-purchase"]').exists()).toBe(false)
+    expect(wrapper.get('[data-testid="balance-figure"]').text()).not.toContain('$')
+    expect(wrapper.text()).toContain('redeem.creditParity')
+    wrapper.unmount()
+  })
+
+  it('keeps the in-app top-up link when payment is enabled and does not open the card shop', async () => {
+    appState.publicSettingsLoaded = true
+    appState.cachedPublicSettings = { payment_enabled: true, custom_menu_items: [] }
+    const wrapper = mount(RedeemView, {
+      global: {
+        stubs: {
+          AppLayout: { template: '<div><slot /></div>' },
+          Icon: true,
+          RouterLink: { props: ['to'], template: '<a class="purchase-link" :href="to"><slot /></a>' },
+        },
+      },
+    })
+    await flushPromises()
+    expect(wrapper.find('[data-testid="card-shop"]').exists()).toBe(false)
+    expect(wrapper.get('[data-testid="online-purchase"] .purchase-link').attributes('href')).toBe('/purchase')
+    expect(wrapper.get('[data-testid="balance-figure"]').text()).toContain('$10.00')
     wrapper.unmount()
   })
 })

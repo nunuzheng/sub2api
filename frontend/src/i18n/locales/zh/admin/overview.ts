@@ -912,6 +912,7 @@ export default {
         creditUnitPriceHint: '范围 $0.00000001～$1000。历史账单保留原价。',
         creditStartedAt: '启用时间',
         creditKeepPrice: '按上游实际积分扣费；${price}/credit。启用时间：{started}。历史账单保留原价。',
+        creditPrice: '积分单价',
         creditPrices: '专属价格',
         creditPricesEmpty: '尚无专属价格，所有用户使用分组默认价格',
         rpmLimit: '每分钟请求数 (RPM)',

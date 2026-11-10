@@ -6155,7 +6155,7 @@ const handleCreateGroup = async () => {
         submitting.value = false;
         return;
       }
-      requestData.credit_billing = { enabled: true, unit_price: price };
+      Object.assign(requestData, { credit_billing: { enabled: true, unit_price: price } });
     } else {
       delete (requestData as Record<string, unknown>).credit_billing;
     }
@@ -6533,13 +6533,15 @@ const handleUpdateGroup = async () => {
         submitting.value = false;
         return;
       }
-      payload.credit_billing = {
-        enabled: true,
-        unit_price: creditPrice,
-        ...(editingGroup.value?.credit_billing?.cost_per_credit != null
-          ? { cost_per_credit: editingGroup.value.credit_billing.cost_per_credit }
-          : {}),
-      };
+      Object.assign(payload, {
+        credit_billing: {
+          enabled: true,
+          unit_price: creditPrice,
+          ...(editingGroup.value?.credit_billing?.cost_per_credit != null
+            ? { cost_per_credit: editingGroup.value.credit_billing.cost_per_credit }
+            : {}),
+        },
+      });
     }
     delete (payload as Record<string, unknown>).credit_enabled;
     delete (payload as Record<string, unknown>).credit_unit_price;

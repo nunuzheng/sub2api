@@ -1,4 +1,5 @@
 <template>
+  <!-- Not mounted. Console navigation is AppTopNav + consoleNav.ts. -->
   <aside
     class="sidebar"
     :class="[
