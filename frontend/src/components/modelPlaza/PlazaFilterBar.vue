@@ -1,33 +1,40 @@
 <template>
   <div class="space-y-3">
-    <!-- 一级:平台 -->
-    <div class="flex items-start gap-2">
-      <span class="w-10 shrink-0 pt-2 text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-dark-500">
+    <!-- 一级:平台。芯片只展示接口返回的 routing platform，不补尚未出现的品牌。 -->
+    <div class="flex min-w-0 items-start gap-2">
+      <span
+        id="plaza-filter-platform"
+        class="w-10 shrink-0 pt-2 text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-dark-500"
+      >
         {{ t('modelPlaza.filters.platformLabel') }}
       </span>
-      <div class="flex flex-wrap items-center gap-2">
+      <div
+        class="flex min-w-0 flex-1 flex-wrap items-center gap-1.5 overflow-x-auto"
+        role="group"
+        aria-labelledby="plaza-filter-platform"
+      >
         <button
           v-for="p in ['all', ...platforms]"
           :key="`platform-${p}`"
           type="button"
-          class="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-40 disabled:grayscale"
-          :class="p === 'all' ? chipClass(platform === 'all') : platform === p ? 'chip-tinted-active' : 'chip-tinted'"
-          :style="p === 'all' ? undefined : { '--chip-accent': platformAccentColor(p) }"
+          class="inline-flex items-center justify-center gap-1 whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-medium leading-5 transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-600 disabled:cursor-not-allowed disabled:opacity-40 disabled:grayscale dark:focus-visible:outline-violet-300"
+          :class="platformChipClass(platform === p)"
+          :aria-pressed="platform === p"
           :disabled="p !== 'all' && !platformEnabled(p)"
           @click="$emit('update:platform', p)"
         >
-          <PlatformIcon v-if="p !== 'all'" :platform="p as GroupPlatform" size="xs" />
+          <PlatformIcon v-if="showPlatformBrandIcon(p)" :platform="p" size="sm" />
           {{ p === 'all' ? t('modelPlaza.filters.all') : p }}
         </button>
       </div>
     </div>
 
     <!-- 二级:分组(按所属平台着色,当前组合下无结果的置灰) -->
-    <div class="flex items-start gap-2">
+    <div class="flex min-w-0 items-start gap-2">
       <span class="w-10 shrink-0 pt-2 text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-dark-500">
         {{ t('modelPlaza.filters.groupLabel') }}
       </span>
-      <div class="flex flex-wrap items-center gap-2">
+      <div class="flex min-w-0 flex-1 flex-wrap items-center gap-2">
         <button
           type="button"
           class="rounded-lg px-3 py-1.5 text-sm font-medium transition"
@@ -52,11 +59,11 @@
     </div>
 
     <!-- 三级:倍率(当前组合下不存在的置灰) -->
-    <div class="flex items-start gap-2">
+    <div class="flex min-w-0 items-start gap-2">
       <span class="w-10 shrink-0 pt-2 text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-dark-500">
         {{ t('modelPlaza.filters.rateLabel') }}
       </span>
-      <div class="flex flex-wrap items-center gap-2">
+      <div class="flex min-w-0 flex-1 flex-wrap items-center gap-2">
         <button
           type="button"
           class="rounded-lg px-3 py-1.5 text-sm font-medium transition"
@@ -123,8 +130,8 @@
 import { useI18n } from 'vue-i18n'
 import Icon from '@/components/icons/Icon.vue'
 import PlatformIcon from '@/components/common/PlatformIcon.vue'
+import { platformHasBrandIcon } from '@/components/common/platformBrandIcon'
 import { platformAccentColor } from '@/utils/platformColors'
-import type { GroupPlatform } from '@/types'
 
 const props = defineProps<{
   /** 数据中出现的平台(去重排序后)。 */
@@ -184,10 +191,22 @@ function chipClass(active: boolean): string {
     ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-sm shadow-primary-500/30'
     : 'bg-white text-gray-600 ring-1 ring-inset ring-gray-200 enabled:hover:bg-gray-50 enabled:hover:text-gray-900 enabled:hover:ring-gray-300 dark:bg-dark-800/60 dark:text-dark-300 dark:ring-dark-700 dark:enabled:hover:bg-dark-800 dark:enabled:hover:text-white'
 }
+
+/** 已知品牌才出图标；「全部」与未登记平台只留文案。 */
+function showPlatformBrandIcon(platformId: string): boolean {
+  return platformId !== 'all' && platformHasBrandIcon(platformId)
+}
+
+/** 平台筛选选中态用紫色，未选中保持中性底，不按平台染色。 */
+function platformChipClass(active: boolean): string {
+  return active
+    ? 'bg-violet-600 text-white shadow-sm shadow-violet-600/25 hover:bg-violet-700 dark:bg-violet-600 dark:hover:bg-violet-500'
+    : 'bg-white text-gray-600 ring-1 ring-inset ring-gray-200 hover:bg-gray-50 hover:text-gray-900 dark:bg-dark-800 dark:text-dark-200 dark:ring-dark-600 dark:hover:bg-dark-700 dark:hover:text-white'
+}
 </script>
 
 <style scoped>
-/* 平台/分组 chip 的配色统一从 --chip-accent(平台主色)派生,新增平台无需扩展样式。
+/* 分组 chip 的配色从 --chip-accent(平台主色)派生。平台筛选不使用这套染色。
    激活态与非激活态在模板上互斥挂载,避免选择器优先级互相覆盖。 */
 .chip-tinted {
   color: var(--chip-accent);
