@@ -1,32 +1,23 @@
 <template>
   <AppLayout>
-    <div class="balance-page">
-      <section class="balance-hero" aria-labelledby="balance-heading">
-        <p id="balance-heading" class="balance-kicker">{{ t('redeem.currentBalance') }}</p>
+    <div class="recharge">
+      <section class="card recharge-card" aria-labelledby="balance-heading">
+        <p id="balance-heading" class="recharge-kicker">{{ t('redeem.currentBalance') }}</p>
         <p
           class="balance-figure"
           :class="{ 'is-refreshing': balanceRefreshing }"
           data-testid="balance-figure"
-        >
-          {{ formatBalance(shownBalance) }}
-          <span v-if="creditLedger" class="balance-unit">{{ t('redeem.creditUnit') }}</span>
-        </p>
+        >{{ formatBalance(shownBalance) }}</p>
         <p v-if="balanceRefreshing" role="status">{{ t('redeem.balanceRefreshing') }}</p>
-        <p v-if="creditLedger" class="balance-parity">{{ t('redeem.creditParity') }}</p>
         <p v-else-if="!settingsLoaded" role="status">{{ t('redeem.settingsLoading') }}</p>
-        <p class="balance-concurrency">
-          {{ t('redeem.concurrency') }}: {{ user?.concurrency || 0 }} {{ t('redeem.requests') }}
-        </p>
-      </section>
 
-      <div class="balance-split">
-        <section class="balance-pane" aria-labelledby="purchase-heading">
-          <h2 id="purchase-heading">{{ creditLedger ? t('redeem.purchaseTitle') : t('redeem.onlinePurchaseTitle') }}</h2>
+        <div class="recharge-block">
+          <h2>{{ creditLedger ? t('redeem.purchaseTitle') : t('redeem.onlinePurchaseTitle') }}</h2>
           <template v-if="creditLedger">
             <div data-testid="card-shop">
               <p>{{ t('redeem.purchaseLead') }}</p>
               <fieldset class="tier-list">
-                <legend>{{ t('redeem.soldOnly') }}</legend>
+                <legend class="sr-only">{{ t('redeem.soldOnly') }}</legend>
                 <label
                   v-for="tier in tiers"
                   :key="tier.id"
@@ -45,7 +36,7 @@
                 target="_blank"
                 rel="noopener noreferrer"
               >{{ t('redeem.shopAction') }}</a>
-              <p>{{ t('redeem.shopHint') }}</p>
+              <p class="recharge-note">{{ t('redeem.shopHint') }}</p>
             </div>
           </template>
           <template v-else-if="settingsLoaded && paymentEnabled">
@@ -54,134 +45,101 @@
               <router-link class="btn btn-primary" to="/purchase">{{ t('redeem.goToPurchase') }}</router-link>
             </div>
           </template>
-          <p v-else>{{ t('redeem.settingsLoading') }}</p>
-          <details class="balance-howto">
-            <summary>{{ t('redeem.howTo') }}</summary>
-            <ol v-if="creditLedger">
-              <li>{{ t('redeem.stepShop') }}</li>
-              <li>{{ t('redeem.stepCode') }}</li>
-              <li>{{ t('redeem.stepRedeem') }}</li>
-            </ol>
-            <p v-else>{{ t('redeem.onlinePurchaseLead') }}</p>
-          </details>
-        </section>
+        </div>
 
-        <section class="balance-pane" aria-labelledby="redeem-heading">
+        <form class="recharge-block" @submit.prevent="handleRedeem">
           <h2 id="redeem-heading">{{ t('redeem.redeemTitle') }}</h2>
-          <p>{{ t('redeem.redeemLead') }}</p>
-          <form @submit.prevent="handleRedeem">
-            <label for="code" class="input-label">{{ t('redeem.redeemCodeLabel') }}</label>
-            <input
-              id="code"
-              v-model="redeemCode"
-              type="text"
-              required
-              autocomplete="off"
-              :placeholder="t('redeem.redeemCodePlaceholder')"
-              :disabled="submitting"
-              class="input"
-            />
-            <p class="input-hint">{{ t('redeem.redeemCodeHint') }}</p>
-            <button
-              type="submit"
-              class="btn btn-primary"
-              :disabled="!redeemCode || submitting"
-              :aria-busy="submitting"
-            >
-              <span v-if="submitting" class="spinner" aria-hidden="true"></span>
-              {{ submitting ? t('redeem.redeeming') : t('redeem.redeemButton') }}
-            </button>
-          </form>
+          <label for="code" class="input-label">{{ t('redeem.redeemCodeLabel') }}</label>
+          <input
+            id="code"
+            v-model="redeemCode"
+            type="text"
+            required
+            autocomplete="off"
+            :placeholder="t('redeem.redeemCodePlaceholder')"
+            :disabled="submitting"
+            class="input"
+          />
+          <button
+            type="submit"
+            class="btn btn-primary"
+            :disabled="!redeemCode || submitting"
+            :aria-busy="submitting"
+          >
+            <span v-if="submitting" class="spinner" aria-hidden="true"></span>
+            {{ submitting ? t('redeem.redeeming') : t('redeem.redeemButton') }}
+          </button>
+        </form>
 
-          <div role="status" aria-live="polite">
-            <div v-if="redeemResult" class="balance-feedback is-success" data-testid="redeem-success">
-              <h3>{{ t('redeem.redeemSuccess') }}</h3>
-              <p>{{ redeemResult.message }}</p>
-              <p v-if="redeemResult.type === 'balance'">
-                {{ t('redeem.added') }}: {{ formatSignedBalance(redeemResult.value) }}
-              </p>
-              <p v-else-if="redeemResult.type === 'concurrency'">
-                {{ t('redeem.added') }}: {{ redeemResult.value }} {{ t('redeem.concurrentRequests') }}
-              </p>
-              <p v-else-if="redeemResult.type === 'subscription'">
-                {{ t('redeem.subscriptionAssigned') }}
-                <span v-if="redeemResult.group_name"> - {{ redeemResult.group_name }}</span>
-                <span v-if="redeemResult.validity_days">
-                  ({{ t('redeem.subscriptionDays', { days: redeemResult.validity_days }) }})
-                </span>
-              </p>
-              <p v-if="redeemResult.new_balance !== undefined">
-                {{ t('redeem.newBalance') }}:
-                <span class="tabular-nums">{{ formatBalance(redeemResult.new_balance) }}</span>
-              </p>
-              <p v-if="redeemResult.new_concurrency !== undefined">
-                {{ t('redeem.newConcurrency') }}:
-                {{ redeemResult.new_concurrency }} {{ t('redeem.requests') }}
-              </p>
-            </div>
-            <div v-if="errorMessage" class="balance-feedback is-error" data-testid="redeem-error">
-              <h3>{{ t('redeem.redeemFailed') }}</h3>
-              <p>{{ errorMessage }}</p>
-            </div>
+        <div role="status" aria-live="polite">
+          <div v-if="redeemResult" class="recharge-feedback is-success" data-testid="redeem-success">
+            <h3>{{ t('redeem.redeemSuccess') }}</h3>
+            <p>{{ redeemResult.message }}</p>
+            <p v-if="redeemResult.type === 'balance'">
+              {{ t('redeem.added') }}: {{ formatSignedBalance(redeemResult.value) }}
+            </p>
+            <p v-else-if="redeemResult.type === 'subscription'">
+              {{ t('redeem.subscriptionAssigned') }}
+              <span v-if="redeemResult.group_name"> - {{ redeemResult.group_name }}</span>
+            </p>
+            <p v-if="redeemResult.new_balance !== undefined">
+              {{ t('redeem.newBalance') }}:
+              <span class="tabular-nums">{{ formatBalance(redeemResult.new_balance) }}</span>
+            </p>
           </div>
-        </section>
-      </div>
+          <div v-if="errorMessage" class="recharge-feedback is-error" data-testid="redeem-error">
+            <h3>{{ t('redeem.redeemFailed') }}</h3>
+            <p>{{ errorMessage }}</p>
+          </div>
+        </div>
+      </section>
 
-      <section class="balance-ledger" aria-labelledby="ledger-heading">
-        <div class="balance-ledger-head">
-          <h2 id="ledger-heading">{{ t('redeem.ledgerTitle') }}</h2>
-          <p>{{ t('redeem.ledgerNote') }}</p>
+      <section class="card recharge-card recharge-records" aria-labelledby="ledger-heading">
+        <div class="record-body">
+          <div class="balance-ledger-head">
+            <div>
+              <h2 id="ledger-heading">
+                {{ t('redeem.ledgerTitle') }}
+                <span class="record-count" data-testid="record-count">{{ t('pagination.totalCount', { count: historyTotal }) }}</span>
+              </h2>
+              <p>{{ t('redeem.ledgerNote') }}</p>
+            </div>
+            <label class="record-size">
+              <span class="sr-only">{{ t('pagination.perPage') }}</span>
+              <select
+                v-model="historyPageSize"
+                :disabled="loadingHistory || submitting"
+                @change="fetchHistory(1)"
+              >
+                <option v-for="size in [20, 50, 100]" :key="size" :value="size">{{ size }}</option>
+              </select>
+            </label>
+          </div>
+          <p v-if="loadingHistory" role="status">{{ t('redeem.historyLoading') }}</p>
+          <ul v-else-if="history.length > 0" class="record-list">
+            <li v-for="item in history" :key="item.id">
+              <div class="record-top">
+                <span class="tabular-nums">{{ formatHistoryValue(item) }}</span>
+                <span>{{ getHistoryItemTitle(item) }}</span>
+              </div>
+              <p class="record-meta">
+                {{ formatDateTime(item.used_at) }}
+                <span v-if="!isAdminAdjustment(item.type)"> · {{ item.code.slice(0, 8) }}...</span>
+                <span v-else> · {{ t('redeem.adminAdjustment') }}</span>
+                <span v-if="item.notes"> · {{ item.notes }}</span>
+              </p>
+            </li>
+          </ul>
+          <p v-else>{{ t('redeem.historyWillAppear') }}</p>
         </div>
-        <p v-if="loadingHistory" role="status">{{ t('redeem.historyLoading') }}</p>
-        <table v-else-if="history.length > 0" class="balance-table">
-          <thead>
-            <tr>
-              <th>{{ t('redeem.colTime') }}</th>
-              <th>{{ t('redeem.colType') }}</th>
-              <th>{{ t('redeem.colChange') }}</th>
-              <th>{{ t('redeem.colNote') }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="item in history" :key="item.id">
-              <td>{{ formatDateTime(item.used_at) }}</td>
-              <td>{{ getHistoryItemTitle(item) }}</td>
-              <td class="tabular-nums">{{ formatHistoryValue(item) }}</td>
-              <td>
-                <span v-if="!isAdminAdjustment(item.type)">{{ item.code.slice(0, 8) }}...</span>
-                <span v-else>{{ t('redeem.adminAdjustment') }}</span>
-                <span v-if="item.notes"> {{ item.notes }}</span>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-        <p v-else>{{ t('redeem.historyWillAppear') }}</p>
-        <div class="balance-pager">
-          <span>{{ t('common.total') }}: {{ historyTotal }} {{ t('pagination.results') }}</span>
-          <label>
-            {{ t('pagination.perPage') }}
-            <select
-              v-model="historyPageSize"
-              class="input"
-              :disabled="loadingHistory || submitting"
-              @change="fetchHistory(1)"
-            >
-              <option v-for="size in [20, 50, 100]" :key="size" :value="size">{{ size }}</option>
-            </select>
-          </label>
-          <button
-            type="button"
-            class="btn btn-secondary"
-            :disabled="loadingHistory || submitting || historyPage <= 1"
-            @click="fetchHistory(historyPage - 1)"
-          >{{ t('pagination.previous') }}</button>
-          <button
-            type="button"
-            class="btn btn-secondary"
-            :disabled="loadingHistory || submitting || historyPage * historyPageSize >= historyTotal"
-            @click="fetchHistory(historyPage + 1)"
-          >{{ t('pagination.next') }}</button>
-        </div>
+        <Pagination
+          :total="historyTotal"
+          :page="historyPage"
+          :page-size="historyPageSize"
+          :disabled="loadingHistory || submitting"
+          :show-page-size-selector="false"
+          @update:page="fetchHistory"
+        />
       </section>
     </div>
   </AppLayout>
@@ -195,6 +153,7 @@ import { useAppStore } from '@/stores/app'
 import { useSubscriptionStore } from '@/stores/subscriptions'
 import { redeemAPI, type RedeemHistoryItem } from '@/api'
 import AppLayout from '@/components/layout/AppLayout.vue'
+import Pagination from '@/components/common/Pagination.vue'
 import { DODO_CARD_TIERS, resolveCardShopUrl, usesCnyCreditLedger } from '@/constants/dodoCardShop'
 import { formatDateTime } from '@/utils/format'
 
@@ -245,14 +204,13 @@ const isAdminAdjustment = (type: string) => type === 'admin_balance' || type ===
 
 function formatBalance(value: number): string {
   const amount = Number.isFinite(value) ? value.toFixed(2) : '0.00'
-  return creditLedger.value ? amount : `$${amount}`
+  return creditLedger.value ? `¥${amount}` : `$${amount}`
 }
 
 function formatSignedBalance(value: number): string {
-  const sign = value >= 0 ? '+' : ''
-  const amount = Number.isFinite(value) ? value.toFixed(2) : '0.00'
-  if (creditLedger.value) return `${sign}${amount} ${t('redeem.creditUnit')}`
-  return `${sign}$${amount}`
+  const amount = Number.isFinite(value) ? Math.abs(value).toFixed(2) : '0.00'
+  const sign = value < 0 ? '-' : '+'
+  return creditLedger.value ? `${sign}¥${amount}` : `${sign}$${amount}`
 }
 
 const getHistoryItemTitle = (item: RedeemHistoryItem) => {
@@ -353,118 +311,188 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.balance-page {
+.recharge {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+.recharge-card {
+  min-width: 0;
+  padding: 1.25rem;
+}
+
+.recharge-records {
+  padding: 0;
+  overflow: hidden;
+}
+
+.record-body {
+  padding: 1.25rem 1.25rem 0.85rem;
+}
+
+.balance-ledger-head {
   display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem 0.75rem;
 }
 
-.balance-hero,
-.balance-pane,
-.balance-ledger {
-  border-top: 1px solid var(--line);
-  padding-top: 1rem;
+.balance-ledger-head h2 {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem 0.55rem;
 }
 
-.balance-kicker,
-.balance-parity,
-.balance-concurrency,
-.balance-ledger-head p,
-.tier-list legend,
-.balance-pane p {
+.record-count {
+  color: #6b6b73;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.dark .record-count {
+  color: #a1a1aa;
+}
+
+.record-size select {
+  height: 32px;
+  min-width: 4.25rem;
+  padding: 0 0.5rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink);
+  font-size: 13px;
+}
+
+.recharge-kicker,
+.recharge-note,
+.balance-ledger-head p {
+  color: #525252;
   font-size: 0.95rem;
 }
 
+.dark .recharge-kicker,
+.dark .recharge-note,
+.dark .balance-ledger-head p {
+  color: #d4d4d4;
+}
+
 .balance-figure {
-  margin: 0.25rem 0;
-  font-size: 2.5rem;
-  line-height: 1.1;
+  margin: 0.2rem 0 0.75rem;
+  font-size: 2rem;
+  line-height: 1.15;
 }
 
-.balance-unit {
-  margin-left: 0.35rem;
-  font-size: 1rem;
-  font-weight: 400;
-}
-
-.balance-split {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 1.5rem;
-}
-
-.balance-pane h2,
-.balance-ledger h2 {
-  margin-bottom: 0.5rem;
-  font-size: 1.05rem;
-  font-weight: 700;
-}
-
-.balance-pane form,
-.tier-list,
-.balance-howto {
+.recharge-block {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
-  margin-top: 0.75rem;
+  margin-top: 1.25rem;
+}
+
+.recharge-block h2,
+.balance-ledger-head h2 {
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.tier-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
 }
 
 .tier-option {
   display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.7rem 0;
-  border-bottom: 1px solid var(--line);
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.85rem 0.9rem;
+  border: 1px solid var(--line);
+  border-radius: 0.75rem;
+  background: transparent;
 }
 
 .tier-option.is-selected {
+  border-color: var(--accent);
   color: var(--accent);
 }
 
-.balance-feedback {
+.recharge-feedback {
   margin-top: 1rem;
-  padding-top: 0.75rem;
-  border-top: 1px solid var(--line);
 }
 
-.balance-feedback.is-success {
+.recharge-feedback.is-success {
   color: #065f46;
 }
 
-.balance-feedback.is-error {
+.dark .recharge-feedback.is-success {
+  color: #6ee7b7;
+}
+
+.recharge-feedback.is-error {
   color: #9f1239;
 }
 
-.balance-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.95rem;
+.dark .recharge-feedback.is-error {
+  color: #fda4af;
 }
 
-.balance-table th,
-.balance-table td {
-  padding: 0.65rem 0.4rem;
-  border-bottom: 1px solid var(--line);
-  text-align: left;
-  vertical-align: top;
-}
-
-.balance-pager {
+.record-list {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.75rem;
-  margin-top: 1rem;
+  flex-direction: column;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  list-style: none;
 }
 
-@media (min-width: 900px) {
-  .balance-split {
-    grid-template-columns: 1fr 1fr;
-  }
+.record-list li {
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--line);
+}
 
-  .balance-pane + .balance-pane {
-    border-left: 1px solid var(--line);
-    padding-left: 1.5rem;
+.record-list li:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.record-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  font-weight: 700;
+}
+
+.record-meta {
+  margin-top: 0.2rem;
+  color: #525252;
+  font-size: 0.9rem;
+  overflow-wrap: anywhere;
+}
+
+.dark .record-meta {
+  color: #d4d4d4;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (min-width: 860px) {
+  .recharge {
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+    gap: 1.25rem;
+    align-items: start;
   }
 }
 

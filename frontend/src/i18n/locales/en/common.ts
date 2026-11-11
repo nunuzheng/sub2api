@@ -215,7 +215,7 @@ export default {
     promptAudit: 'Prompt Audit',
     auditLogs: 'Audit Logs',
     overview: 'Overview',
-    balance: 'Balance',
+    balance: 'Top up',
     adminMenu: 'Admin',
     accountMenu: 'Account',
     primary: 'Primary',
