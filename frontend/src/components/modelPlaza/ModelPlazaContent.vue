@@ -33,6 +33,11 @@
       {{ t('modelPlaza.loadFailed') }}
     </div>
     <template v-else>
+      <p class="text-xs leading-5 text-gray-500 dark:text-dark-400">
+        {{ t('modelPlaza.detail.ledgerNote') }}
+        {{ t('modelPlaza.detail.deepseekNote') }}
+      </p>
+
       <!-- 筛选区:平台 → 分组 → 倍率 -->
       <PlazaFilterBar
         :platforms="platforms"

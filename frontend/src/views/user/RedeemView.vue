@@ -8,6 +8,7 @@
           :class="{ 'is-refreshing': balanceRefreshing }"
           data-testid="balance-figure"
         >{{ formatBalance(shownBalance) }}</p>
+        <p v-if="creditLedger" class="recharge-note">{{ t('redeem.creditParity') }}</p>
         <p v-if="balanceRefreshing" role="status">{{ t('redeem.balanceRefreshing') }}</p>
         <p v-else-if="!settingsLoaded" role="status">{{ t('redeem.settingsLoading') }}</p>
 
@@ -204,13 +205,13 @@ const isAdminAdjustment = (type: string) => type === 'admin_balance' || type ===
 
 function formatBalance(value: number): string {
   const amount = Number.isFinite(value) ? value.toFixed(2) : '0.00'
-  return creditLedger.value ? `¥${amount}` : `$${amount}`
+  return `$${amount}`
 }
 
 function formatSignedBalance(value: number): string {
   const amount = Number.isFinite(value) ? Math.abs(value).toFixed(2) : '0.00'
   const sign = value < 0 ? '-' : '+'
-  return creditLedger.value ? `${sign}¥${amount}` : `${sign}$${amount}`
+  return `${sign}$${amount}`
 }
 
 const getHistoryItemTitle = (item: RedeemHistoryItem) => {
