@@ -1054,6 +1054,7 @@ export default {
     pageOf: 'Page {page} of {total}',
     previous: 'Previous',
     next: 'Next',
+    totalCount: '{count} total',
     perPage: 'Per page',
     goToPage: 'Go to page {page}',
     jumpTo: 'Jump to',

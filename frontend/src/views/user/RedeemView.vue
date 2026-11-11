@@ -95,52 +95,51 @@
       </section>
 
       <section class="card recharge-card recharge-records" aria-labelledby="ledger-heading">
-        <div class="balance-ledger-head">
-          <h2 id="ledger-heading">{{ t('redeem.ledgerTitle') }}</h2>
-          <p>{{ t('redeem.ledgerNote') }}</p>
-        </div>
-        <p v-if="loadingHistory" role="status">{{ t('redeem.historyLoading') }}</p>
-        <ul v-else-if="history.length > 0" class="record-list">
-          <li v-for="item in history" :key="item.id">
-            <div class="record-top">
-              <span class="tabular-nums">{{ formatHistoryValue(item) }}</span>
-              <span>{{ getHistoryItemTitle(item) }}</span>
+        <div class="record-body">
+          <div class="balance-ledger-head">
+            <div>
+              <h2 id="ledger-heading">
+                {{ t('redeem.ledgerTitle') }}
+                <span class="record-count" data-testid="record-count">{{ t('pagination.totalCount', { count: historyTotal }) }}</span>
+              </h2>
+              <p>{{ t('redeem.ledgerNote') }}</p>
             </div>
-            <p class="record-meta">
-              {{ formatDateTime(item.used_at) }}
-              <span v-if="!isAdminAdjustment(item.type)"> · {{ item.code.slice(0, 8) }}...</span>
-              <span v-else> · {{ t('redeem.adminAdjustment') }}</span>
-              <span v-if="item.notes"> · {{ item.notes }}</span>
-            </p>
-          </li>
-        </ul>
-        <p v-else>{{ t('redeem.historyWillAppear') }}</p>
-        <div class="balance-pager">
-          <span>{{ t('common.total') }}: {{ historyTotal }} {{ t('pagination.results') }}</span>
-          <label>
-            {{ t('pagination.perPage') }}
-            <select
-              v-model="historyPageSize"
-              class="input"
-              :disabled="loadingHistory || submitting"
-              @change="fetchHistory(1)"
-            >
-              <option v-for="size in [20, 50, 100]" :key="size" :value="size">{{ size }}</option>
-            </select>
-          </label>
-          <button
-            type="button"
-            class="btn btn-secondary"
-            :disabled="loadingHistory || submitting || historyPage <= 1"
-            @click="fetchHistory(historyPage - 1)"
-          >{{ t('pagination.previous') }}</button>
-          <button
-            type="button"
-            class="btn btn-secondary"
-            :disabled="loadingHistory || submitting || historyPage * historyPageSize >= historyTotal"
-            @click="fetchHistory(historyPage + 1)"
-          >{{ t('pagination.next') }}</button>
+            <label class="record-size">
+              <span class="sr-only">{{ t('pagination.perPage') }}</span>
+              <select
+                v-model="historyPageSize"
+                :disabled="loadingHistory || submitting"
+                @change="fetchHistory(1)"
+              >
+                <option v-for="size in [20, 50, 100]" :key="size" :value="size">{{ size }}</option>
+              </select>
+            </label>
+          </div>
+          <p v-if="loadingHistory" role="status">{{ t('redeem.historyLoading') }}</p>
+          <ul v-else-if="history.length > 0" class="record-list">
+            <li v-for="item in history" :key="item.id">
+              <div class="record-top">
+                <span class="tabular-nums">{{ formatHistoryValue(item) }}</span>
+                <span>{{ getHistoryItemTitle(item) }}</span>
+              </div>
+              <p class="record-meta">
+                {{ formatDateTime(item.used_at) }}
+                <span v-if="!isAdminAdjustment(item.type)"> · {{ item.code.slice(0, 8) }}...</span>
+                <span v-else> · {{ t('redeem.adminAdjustment') }}</span>
+                <span v-if="item.notes"> · {{ item.notes }}</span>
+              </p>
+            </li>
+          </ul>
+          <p v-else>{{ t('redeem.historyWillAppear') }}</p>
         </div>
+        <Pagination
+          :total="historyTotal"
+          :page="historyPage"
+          :page-size="historyPageSize"
+          :disabled="loadingHistory || submitting"
+          :show-page-size-selector="false"
+          @update:page="fetchHistory"
+        />
       </section>
     </div>
   </AppLayout>
@@ -154,6 +153,7 @@ import { useAppStore } from '@/stores/app'
 import { useSubscriptionStore } from '@/stores/subscriptions'
 import { redeemAPI, type RedeemHistoryItem } from '@/api'
 import AppLayout from '@/components/layout/AppLayout.vue'
+import Pagination from '@/components/common/Pagination.vue'
 import { DODO_CARD_TIERS, resolveCardShopUrl, usesCnyCreditLedger } from '@/constants/dodoCardShop'
 import { formatDateTime } from '@/utils/format'
 
@@ -323,7 +323,48 @@ onMounted(() => {
 }
 
 .recharge-records {
-  overflow-x: auto;
+  padding: 0;
+  overflow: hidden;
+}
+
+.record-body {
+  padding: 1.25rem 1.25rem 0.85rem;
+}
+
+.balance-ledger-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem 0.75rem;
+}
+
+.balance-ledger-head h2 {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem 0.55rem;
+}
+
+.record-count {
+  color: #6b6b73;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.dark .record-count {
+  color: #a1a1aa;
+}
+
+.record-size select {
+  height: 32px;
+  min-width: 4.25rem;
+  padding: 0 0.5rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink);
+  font-size: 13px;
 }
 
 .recharge-kicker,
@@ -412,6 +453,11 @@ onMounted(() => {
   border-bottom: 1px solid var(--line);
 }
 
+.record-list li:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
 .record-top {
   display: flex;
   justify-content: space-between;
@@ -428,14 +474,6 @@ onMounted(() => {
 
 .dark .record-meta {
   color: #d4d4d4;
-}
-
-.balance-pager {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.75rem;
-  margin-top: 1rem;
 }
 
 .sr-only {

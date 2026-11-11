@@ -41,7 +41,13 @@ vi.mock('@/stores/app', () => ({
 }))
 vi.mock('vue-i18n', async () => {
   const actual = await vi.importActual<typeof import('vue-i18n')>('vue-i18n')
-  return { ...actual, useI18n: () => ({ t: (key: string) => key }) }
+  return {
+    ...actual,
+    useI18n: () => ({
+      t: (key: string, params?: Record<string, unknown>) =>
+        params ? `${key} ${Object.values(params).join(' ')}` : key,
+    }),
+  }
 })
 
 async function submitCode() {
@@ -130,7 +136,8 @@ describe('RedeemView refresh after redemption', () => {
     await wrapper.get('form').trigger('submit')
     await flushPromises()
     expect(getHistory).toHaveBeenLastCalledWith(1, 100)
-    expect(wrapper.text()).toContain('102')
+    expect(wrapper.get('[data-testid="record-count"]').text()).toContain('pagination.totalCount')
+    expect(wrapper.get('[data-testid="record-count"]').text()).toContain('102')
     expect(button('pagination.previous').attributes('disabled')).toBeDefined()
     wrapper.unmount()
   })
