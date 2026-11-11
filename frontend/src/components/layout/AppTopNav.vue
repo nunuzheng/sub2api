@@ -206,7 +206,6 @@ import { useOnboardingStore } from '@/stores/onboarding'
 import AnnouncementBell from '@/components/common/AnnouncementBell.vue'
 import LocaleSwitcher from '@/components/common/LocaleSwitcher.vue'
 import VersionBadge from '@/components/common/VersionBadge.vue'
-import { usesCnyCreditLedger } from '@/constants/dodoCardShop'
 import { sanitizeUrl } from '@/utils/url'
 import ConsoleMenuList from './ConsoleMenuList.vue'
 import { useConsoleNav } from './useConsoleNav'
@@ -244,16 +243,12 @@ const docUrl = computed(() => sanitizeUrl(appStore.docUrl || ''))
 const contactInfo = computed(() => appStore.contactInfo)
 const showOnboarding = computed(() => !authStore.isSimpleMode && user.value?.role === 'admin')
 
-const creditLedger = computed(() => usesCnyCreditLedger(
-  appStore.publicSettingsLoaded,
-  appStore.cachedPublicSettings?.payment_enabled,
-))
 const availableBalance = computed(() => Number(user.value?.balance || 0))
 const frozenBalance = computed(() => Number(user.value?.frozen_balance || 0))
 
 function formatAmount(value: number): string {
   const amount = Number.isFinite(value) ? value.toFixed(2) : '0.00'
-  return creditLedger.value ? `¥${amount}` : `$${amount}`
+  return `$${amount}`
 }
 
 const balanceText = computed(() => formatAmount(availableBalance.value))
